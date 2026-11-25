@@ -15,6 +15,32 @@ android {
         versionCode = 4
         versionName = "2.0.0"
     }
+
+    signingConfigs {
+        // The standard Android debug keystore at the repo root: public credentials, never for production.
+        create("development") {
+            storeFile = rootProject.file("debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
+    }
+
+    flavorDimensions += "environment"
+    productFlavors {
+        create("development") {
+            dimension = "environment"
+            applicationIdSuffix = ".dev"
+            versionNameSuffix = "-dev"
+            // A build type's signing config wins over a flavor's, and debug has its own, so this only signs
+            // developmentRelease (built by .github/workflows/build-release-apk.yml). productionRelease stays
+            // unsigned until a release key is set up.
+            signingConfig = signingConfigs.getByName("development")
+        }
+        create("production") {
+            dimension = "environment"
+        }
+    }
 }
 
 dependencies {

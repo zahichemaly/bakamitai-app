@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.compose.compiler.gradle.ComposeCompilerGradlePluginE
 /**
  * `bakamitai.android.application`: the Android application with Compose (AGP 9 built-in Kotlin).
  * Sets SDK levels, the JVM target, release optimization and Compose compiler reports. The module script
- * only adds its namespace, application id, version and dependencies.
+ * only adds its namespace, application id, version, product flavors, signing configs and dependencies.
  */
 class AndroidApplicationConventionPlugin : Plugin<Project> {
     override fun apply(target: Project) = with(target) {

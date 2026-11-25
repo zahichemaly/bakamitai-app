@@ -47,14 +47,14 @@ If the plan's §2 lists Figma node IDs and the Figma MCP tools are available (na
   - If a fix needs a new library, a design decision or a spec change, stop on that issue and report it.
 - **Every logic fix gets a regression test** in the lowest layer that can catch it (mapper, use case, repository with `MockEngine`, or ViewModel with Turbine). The test must fail before the fix and pass after it.
 - **Verification order after every fix**, the same as the implementor's. Each step must pass before the next:
-  1. `./gradlew testDebugUnitTest`
+  1. `./gradlew testDevelopmentDebugUnitTest`
   2. `./gradlew detekt`, right after the unit tests. For ktlint formatting findings, use `--auto-correct`, then re-run.
-  3. `./gradlew installDebug`
+  3. `./gradlew installDevelopmentDebug`
   
   Only then re-test on the emulator.
 - **Git:** don't commit, push, switch branches or stash. Run `git status` first. Build on any uncommitted changes, and never revert them.
 - **The device is shared.** Don't create, wipe or delete AVDs, and don't uninstall other apps. You may:
-  - clear **this app's** data (`adb shell pm clear com.zc.bakamitai`) to test first-launch states
+  - clear **this app's** data (`adb shell pm clear com.zc.bakamitai.dev`) to test first-launch states
   - change device settings to test (airplane mode, dark mode, font scale, screen size, rotation, time zone), but **restore every change before you finish, even when you stop early**
 - **Leaving the app:** the share sheet, browser and torrent intents leave the app. Confirm the intent fired (the expected app or chooser appears), then press Back. Never sign in, share or download anything in another app.
 - **The live site is volunteer-run.** Each `curl` you make to check data, plus the app's own requests, are real traffic. Keep it to what the test needs.
@@ -78,10 +78,10 @@ If the plan's §2 lists Figma node IDs and the Figma MCP tools are available (na
    - the time zone from step 2
    
    §5 restores exactly these values, not "defaults".
-4. **Build and install:** `./gradlew installDebug`. If the build fails, that's your first bug. Fix it under §1's rules.
+4. **Build and install:** `./gradlew installDevelopmentDebug`. If the build fails, that's your first bug. Fix it under §1's rules.
 5. **Launch:**
    - Clear the log with `adb logcat -c`.
-   - Launch with `adb shell monkey -p com.zc.bakamitai -c android.intent.category.LAUNCHER 1`, which works whichever package `MainActivity` lives in. Alternatively, use `android run --apks=app/build/outputs/apk/debug/app-debug.apk`.
+   - Launch with `adb shell monkey -p com.zc.bakamitai.dev -c android.intent.category.LAUNCHER 1`, which works whichever package `MainActivity` lives in. Alternatively, use `android run --apks=app/build/outputs/apk/development/debug/app-development-debug.apk`.
 
 ---
 
@@ -108,7 +108,7 @@ Write the test cases first, as **journeys** in the `android-cli` journey format:
 | **States** | **Loading:** a shimmering skeleton that has the content's layout (nothing jumps when the content replaces it), never a spinner. Loads are often too quick to see, so catch it with rapid `adb exec-out screencap` captures right after a cold start. **Empty:** e.g. Bookmarks after `pm clear`. **Error:** turn airplane mode on with `adb shell cmd connectivity airplane-mode enable`, then confirm the error UI and that **Retry** recovers once you turn it off. **Pull-to-refresh.** |
 | **Interactions** | Every tap target: navigation to Details from every list, bottom-nav switching and re-selecting, Back (`KEYCODE_BACK`) at every level, search typing and clearing, the synopsis expanding, episode rows expanding. |
 | **Settings effects** | Time format switches every time between 12 h and 24 h. First day of week reorders the Schedule tabs. Theme: System (`adb shell cmd uimode night yes/no`), Light, Dark. About opens GitHub. The footer shows the right version. |
-| **Persistence** | Bookmark, `adb shell am force-stop com.zc.bakamitai`, relaunch: the bookmark is still there with its date added. Settings survive a restart too. |
+| **Persistence** | Bookmark, `adb shell am force-stop com.zc.bakamitai.dev`, relaunch: the bookmark is still there with its date added. Settings survive a restart too. |
 | **Intents** | Share opens the chooser. Open in web opens the browser at the show URL. With no torrent app installed, Magnet shows the "No torrent app found" snackbar with **Copy link**. Torrent and XDCC open their URLs. |
 | **Configuration** | Rotation, or a configuration change, keeps the screen state. Font scale 1.3 (`adb shell settings put system font_scale 1.3`) causes no clipping or overlap. A larger window (`adb shell wm size 1600x2560`) gets the adaptive layout (navigation rail, more grid columns). |
 | **Visual quality** | Light and dark both readable. No clipped text, overlaps or misaligned grid items. Material 3 roles look right. Compare against the design screenshots when available. |

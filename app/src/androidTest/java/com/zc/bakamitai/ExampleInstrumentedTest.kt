@@ -17,6 +17,7 @@ class ExampleInstrumentedTest {
     fun useAppContext() {
         // Context of the app under test.
         val appContext = InstrumentationRegistry.getInstrumentation().targetContext
-        assertEquals("com.zc.bakamitai", appContext.packageName)
+        // The development flavor adds a ".dev" suffix to the application id.
+        assertEquals(BuildConfig.APPLICATION_ID, appContext.packageName)
     }
 }

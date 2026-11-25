@@ -641,7 +641,7 @@ class VisualNovelDTOMapperTest {
 
 ### 6.5 Instrumented tests (`androidTest`)
 
-- Code that needs Android to run (Room DAOs, WorkManager workers and schedulers, notification posting, `Intent`s) is tested in `app/src/androidTest/java/com/zc/bakamitai/`, mirroring the main tree, with `./gradlew connectedDebugAndroidTest` on an emulator.
+- Code that needs Android to run (Room DAOs, WorkManager workers and schedulers, notification posting, `Intent`s) is tested in `app/src/androidTest/java/com/zc/bakamitai/`, mirroring the main tree, with `./gradlew connectedDevelopmentDebugAndroidTest` on an emulator.
   - DAOs: `Room.inMemoryDatabaseBuilder`.
   - Workers: `TestListenableWorkerBuilder` with a `WorkerFactory` over fakes; schedulers: `WorkManagerTestInitHelper`.
 - Keep the logic out of these classes: rules (dedup, schedules, retry ladders) live in pure domain code with thorough unit tests. Instrumented tests only check the platform wiring.
@@ -714,11 +714,11 @@ class VisualNovelUIModelMapperTest {
 ```
 
 ```bash
-./gradlew testDebugUnitTest
+./gradlew testDevelopmentDebugUnitTest
 ```
 
 ```bash
-./gradlew assembleRelease && grep -rn "unstable" app/build/compose_compiler/*-composables.txt
+./gradlew assembleProductionRelease && grep -rn "unstable" app/build/compose_compiler/*-composables.txt
 ```
 
 The last `grep` must print nothing for Screens and Views.
@@ -726,7 +726,7 @@ The last `grep` must print nothing for Screens and Views.
 When `app/src/androidTest/` or the code it covers changed, also run (needs an emulator; it uninstalls the app afterwards):
 
 ```bash
-./gradlew connectedDebugAndroidTest
+./gradlew connectedDevelopmentDebugAndroidTest
 ```
 
 ## 8. Checklist

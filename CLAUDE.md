@@ -8,27 +8,29 @@ Android app, being rewritten from scratch. The repo holds a fresh Jetpack Compos
 - Root package `com.zc.bakamitai` (`app/src/main/java/com/zc/bakamitai/`).
 - `minSdk` 27, `compileSdk` / `targetSdk` 37. AGP 9.5.1 (built-in Kotlin), Gradle 9.6.0, Kotlin 2.4.20, Compose BOM 2026.09.00.
 - Every dependency and plugin is declared in `gradle/libs.versions.toml`.
+- Two product flavors (dimension `environment`, declared in `app/build.gradle.kts`): `development` (application id `com.zc.bakamitai.dev`, version name `-dev`) and `production` (`com.zc.bakamitai`). Day-to-day work uses `developmentDebug`. `developmentRelease` is signed with the repo's `debug.keystore`; `productionRelease` is unsigned until a release key is set up.
+- `.github/workflows/build-release-apk.yml` (manual run) builds `assembleDevelopmentRelease` and publishes the APK as a GitHub release.
 - Work happens on `develop`; `master` is the default branch for PRs.
 
 ## Commands
 
 ```bash
-./gradlew assembleDebug
+./gradlew assembleDevelopmentDebug
 ```
 
 ```bash
-./gradlew testDebugUnitTest
+./gradlew testDevelopmentDebugUnitTest
 ```
 
 ```bash
-./gradlew connectedDebugAndroidTest
+./gradlew connectedDevelopmentDebugAndroidTest
 ```
 
 ```bash
-android run --apks=app/build/outputs/apk/debug/app-debug.apk
+android run --apks=app/build/outputs/apk/development/debug/app-development-debug.apk
 ```
 
-- `connectedDebugAndroidTest` needs a running emulator or device, and uninstalls the app when it finishes.
+- `connectedDevelopmentDebugAndroidTest` needs a running emulator or device, and uninstalls the app when it finishes.
 - `android run` installs and launches the debug APK on the connected device.
 - `./gradlew detekt` must pass with zero findings; `./gradlew detekt --auto-correct` fixes ktlint formatting.
 

@@ -48,7 +48,7 @@ If the caller asks for only one phase (e.g. "data only" or "UI only"), do just t
   - never delete, skip or `@Ignore` a test to get green
   - never add `@Suppress` without the justification the `best-practices` skill requires
   - never add a Detekt baseline
-- **Detekt always runs right after the unit tests.** Every time you run `./gradlew testDebugUnitTest`, in a gate or mid-phase, run `./gradlew detekt` immediately after it, and don't move on until both pass.
+- **Detekt always runs right after the unit tests.** Every time you run `./gradlew testDevelopmentDebugUnitTest`, in a gate or mid-phase, run `./gradlew detekt` immediately after it, and don't move on until both pass.
   - **Setup:** the `bakamitai.detekt` convention plugin in `build-logic/` (Detekt 2.x with ktlint formatting and Compose rules) applies `config/detekt/detekt.yml` and scans every source set under `app/src/`.
   - **The bar:** zero findings, no baseline (`best-practices` §2).
   - **Formatting findings** (ktlint): run `./gradlew detekt --auto-correct`, review the diff, then run `./gradlew detekt` again.
@@ -98,7 +98,7 @@ Work in this order. Each step should compile before you move to the next.
 
 1. Unit tests:
    ```bash
-   ./gradlew testDebugUnitTest
+   ./gradlew testDevelopmentDebugUnitTest
    ```
 2. Detekt, right after the unit tests:
    ```bash
@@ -106,7 +106,7 @@ Work in this order. Each step should compile before you move to the next.
    ```
 3. Debug build:
    ```bash
-   ./gradlew assembleDebug
+   ./gradlew assembleDevelopmentDebug
    ```
 
 Also run the grep checks from the `tech-stack` skill's "Verification commands" section, and go through the `architecture` §4 checklist for the files you touched.
@@ -134,7 +134,7 @@ Work in this order:
 
 1. Unit tests:
    ```bash
-   ./gradlew testDebugUnitTest
+   ./gradlew testDevelopmentDebugUnitTest
    ```
 2. Detekt, right after the unit tests:
    ```bash
@@ -142,7 +142,7 @@ Work in this order:
    ```
 3. Release build and Compose stability check:
    ```bash
-   ./gradlew assembleRelease && grep -rn "unstable" app/build/compose_compiler/*-composables.txt
+   ./gradlew assembleProductionRelease && grep -rn "unstable" app/build/compose_compiler/*-composables.txt
    ```
    The `grep` must print nothing for Screens and Views. Then work through the `best-practices` §8 checklist and the `tech-stack` checklist.
 

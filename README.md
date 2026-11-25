@@ -30,7 +30,7 @@ cd BakaMitai
 ```
 
 ```bash
-./gradlew installDebug
+./gradlew installDevelopmentDebug
 ```
 
 Or open the project in Android Studio and run the `app` configuration.
@@ -38,11 +38,11 @@ Or open the project in Android Studio and run the `app` configuration.
 ## Tests
 
 ```bash
-./gradlew testDebugUnitTest
+./gradlew testDevelopmentDebugUnitTest
 ```
 
 ```bash
-./gradlew connectedDebugAndroidTest
+./gradlew connectedDevelopmentDebugAndroidTest
 ```
 
 Instrumented tests need a running emulator or connected device.

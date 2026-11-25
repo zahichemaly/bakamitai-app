@@ -1,0 +1,81 @@
+name: Build & Release APK
+
+# Manual only: run it from the Actions tab ("Run workflow").
+on:
+  workflow_dispatch:
+    inputs:
+      release_notes:
+        description: "Release notes (markdown)"
+        required: false
+        type: string
+        default: ""
+      prerelease:
+        description: "Mark the release as a pre-release"
+        required: false
+        type: boolean
+        default: true
+
+# Needed to create the tag + release. Nothing else.
+permissions:
+  contents: write
+
+# Never run two builds of the same ref at once.
+concurrency:
+  group: build-release-apk-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    env:
+      # The variant this project actually has: flavor "development" + build type "release".
+      GRADLE_TASK: assembleDevelopmentRelease
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      # Caches ~/.gradle (dependencies, wrapper, build cache) between runs.
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: false
+
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
+      - name: Build APK
+        run: ./gradlew "$GRADLE_TASK" --stacktrace
+
+      # Locate the APK dynamically in case the flavor/dimension layout changes.
+      - name: Locate APK and compute tag
+        id: meta
+        run: |
+          APK_PATH=$(find app/build/outputs/apk -type f -name '*.apk' -path '*development*' -path '*release*' | head -n 1)
+          if [ -z "$APK_PATH" ]; then
+            echo "::error::No release APK found under app/build/outputs/apk"
+            find app/build/outputs -type f || true
+            exit 1
+          fi
+          echo "apk_path=$APK_PATH" >> "$GITHUB_OUTPUT"
+          echo "tag=dev-release-${GITHUB_RUN_NUMBER}-$(date -u +%Y%m%d)-${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.meta.outputs.tag }}
+          name: ${{ steps.meta.outputs.tag }}
+          target_commitish: ${{ github.sha }}
+          body: ${{ inputs.release_notes }}
+          prerelease: ${{ inputs.prerelease }}
+          generate_release_notes: ${{ inputs.release_notes == '' }}
+          files: ${{ steps.meta.outputs.apk_path }}
+          fail_on_unmatched_files: true

@@ -125,7 +125,7 @@ tasks.register("printVersion") { doLast { println(version) } }
 ## 4. `build-logic/`: convention plugins & custom tasks
 
 - `build-logic/` is an **included build** that holds all shared build configuration (convention plugins) and **every custom Gradle task**. `buildSrc/` is not used.
-- Module scripts (`app/build.gradle.kts`) and the root `build.gradle.kts` stay **declarative**: they apply plugins, set the namespace/application id, and declare dependencies, nothing else.
+- Module scripts (`app/build.gradle.kts`) and the root `build.gradle.kts` stay **declarative**: they apply plugins, set the namespace/application id and version, declare the module's own product flavors and signing configs, and declare dependencies, nothing else.
 - Each custom task is an `abstract class` extending `DefaultTask`, with annotated inputs/outputs and a `@TaskAction`, so it is cacheable and configuration-cache compatible. A convention plugin registers it.
 - Convention plugins read the shared catalog through `VersionCatalogsExtension`, never with hardcoded coordinates.
 - Plugin ids use the `bakamitai.` prefix and are registered in `build-logic/convention/build.gradle.kts`.
@@ -268,7 +268,7 @@ class KotlinOnlyConventionPlugin : Plugin<Project> {
 >
 > **Kotlin version:** AGP 9 has built-in Kotlin and brings KGP 2.2.10, but the Koin compiler plugin needs Kotlin 2.3.20–2.4.20. The root `build.gradle.kts` declares `alias(libs.plugins.kotlin.android) apply false` (never applied) so the catalog's `kotlin` version replaces it on the build classpath. When bumping `kotlin`, stay within the Koin compiler plugin's verified Kotlin versions.
 >
-> **Compose reports:** every variant writes to the same `app/build/compose_compiler/*.txt`, so read them right after `assembleRelease`, before another variant (e.g. unit tests) compiles.
+> **Compose reports:** every variant writes to the same `app/build/compose_compiler/*.txt`, so read them right after `assembleProductionRelease`, before another variant (e.g. unit tests) compiles.
 >
 > **Detekt specifics** (Detekt 2.x, `dev.detekt.gradle.extensions.DetektExtension`):
 > - Because `build-logic` only has the Detekt Gradle plugin as `compileOnly`, the root `build.gradle.kts` declares `alias(libs.plugins.detekt) apply false` so the plugin is on the build classpath when the convention plugin applies it.
@@ -286,12 +286,12 @@ class KotlinOnlyConventionPlugin : Plugin<Project> {
 3. Add the `[libraries]` / `[plugins]` entry, plus a `[bundles]` entry if it always ships with others.
 4. Reference it via `libs.*` in the module's `dependencies {}`, or in a convention plugin if several modules or the build itself need it.
 5. Add its row to the artifact map (§2).
-6. Run `./gradlew assembleDebug testDebugUnitTest detekt`.
+6. Run `./gradlew assembleDevelopmentDebug testDevelopmentDebugUnitTest detekt`.
 
 ### Updating a version
 1. Change only the `[versions]` value. Every artifact on that release train moves together.
 2. Read the release notes for breaking changes and migrate call sites in the same change.
-3. Run `./gradlew assembleDebug testDebugUnitTest detekt`.
+3. Run `./gradlew assembleDevelopmentDebug testDevelopmentDebugUnitTest detekt`.
 
 ### Removing a library
 1. Remove its usages and the `libs.*` references.
