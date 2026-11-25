@@ -1,9 +1,7 @@
 name: Android CI
+# Manual only: run it from the Actions tab ("Run workflow").
 on:
-  push:
-    branches: [ master ]
-  pull_request:
-    branches: [ master ]
+  workflow_dispatch:
 
 jobs:
   build:
