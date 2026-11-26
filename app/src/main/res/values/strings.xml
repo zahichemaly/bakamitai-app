@@ -1,77 +1,273 @@
 <resources>
     <string name="app_name">BakaMitai</string>
-    <string name="title_home">Home</string>
-    <string name="title_dashboard">Dashboard</string>
-    <string name="title_notifications">Notifications</string>
-    <string name="title_schedule">Schedule</string>
-    <string name="title_library">All Shows</string>
-    <string name="title_bookmarks">Bookmarks</string>
-    <string name="title_settings">Settings</string>
-    <string name="ep_">Ep %s</string>
-    <string name="episode_">Episode %s</string>
-    <string name="loading">Loading…</string>
-    <string name="today">Today</string>
-    <string name="latest_releases">Latest Releases</string>
-    <string name="aired">Aired</string>
-    <string name="not_aired">Not Aired</string>
-    <string name="synopsis">Synopsis</string>
-    <string name="dummy_text">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum</string>
-    <string name="show_image">Show image</string>
-    <string name="collapse_button">Collapse button</string>
-    <string name="bookmark">Bookmark</string>
-    <string name="download">Download</string>
 
-    <!-- Error -->
-    <string name="error_1">Nani? Something went wrong while fetching your data! &#128534;</string>
-    <string name="error_2">Yare yare…\nYour data could not be fetched!</string>
-    <string name="error_3">Are? The data could not be fetched!</string>
-    <string name="error_4">Something went wrong, and we could not fetch your data ~desu</string>
+    <!-- Actions -->
+    <string name="action_retry">Retry</string>
+    <string name="cd_settings">Settings</string>
+    <string name="cd_loading">Loading</string>
+    <string name="cd_navigate_back">Navigate back</string>
+    <!-- State descriptions of expandable rows for TalkBack. -->
+    <string name="cd_expanded">Expanded</string>
+    <string name="cd_collapsed">Collapsed</string>
 
-    <!-- Preference Titles -->
-    <string name="preferences">Preferences</string>
-    <string name="sync_header">Sync</string>
+    <!-- Navigation (app/navigation) -->
+    <string name="nav_home">Home</string>
+    <string name="nav_schedule">Schedule</string>
+    <string name="nav_all_shows">All Shows</string>
+    <string name="nav_bookmarks">Bookmarks</string>
 
-    <!-- Messages Preferences -->
-    <string name="calendar_format">First day of week</string>
-    <string name="time_format">Time format</string>
-    <string name="monday">Monday</string>
-    <string name="sunday">Sunday</string>
-    <string name="light">Light</string>
-    <string name="dark">Dark</string>
-    <string name="system">System</string>
+    <!-- Errors (common/ui/component/error) -->
+    <string name="error_network">Can\'t reach SubsPlease. Check your connection and try again.</string>
+    <string name="error_not_found">This page isn\'t available on SubsPlease anymore.</string>
+    <string name="error_rate_limited">SubsPlease is getting too many requests. Try again in a moment.</string>
+    <string name="error_unauthorized">SubsPlease refused the request.</string>
+    <string name="error_generic">Something went wrong. Try again.</string>
 
-    <!-- Sync Preferences -->
-    <string name="sync_title">Sync email periodically</string>
-    <string name="attachment_title">Download incoming attachments</string>
-    <string name="attachment_summary_on">Automatically download attachments for incoming emails</string>
-    <string name="attachment_summary_off">Only download attachments when manually requested</string>
-    <string name="more">More</string>
-    <string name="information">Information</string>
-    <string name="version">Version</string>
-    <string name="version_no">1.0.0</string>
-    <string name="theme">Theme</string>
-    <string name="about">About</string>
-    <string name="author">github.com/zahichemaly</string>
-    <string name="key_calendar">first_day</string>
-    <string name="key_time_format">time_format</string>
-    <string name="key_about">about</string>
-    <string name="key_version">version</string>
-    <string name="key_theme">theme</string>
+    <!-- Shared labels (common/ui/mapper) -->
+    <!-- %1$s: the offset after "UTC": "+9", "-5", "+5:30", or empty at zero. -->
+    <string name="utc_offset">UTC%1$s</string>
+    <!-- Episode titles (Details' rows, new-episode notifications). %1$s: the episode as SubsPlease writes it, "20". -->
+    <string name="episode_label_number">Episode %1$s</string>
+    <!-- %1$s: the episode, "1216"; %2$s: the revision, "2". -->
+    <string name="episode_label_revision">Episode %1$s (v%2$s)</string>
+    <!-- %1$s: the range with an en dash, "01–28". -->
+    <string name="episode_label_batch">Episodes %1$s</string>
+    <string name="episode_label_movie">Movie</string>
 
-    <!-- Notifications-->
-    <string name="channel_name">Notifications</string>
-    <string name="channel_description">Notifications for bookmarked releases</string>
-    <string name="notif_title">&#128293; New Release! &#128293;</string>
-    <string name="notif_content">New episode of %s is out!</string>
-    <string name="error">Error</string>
-    <string name="empty_bookmarks">Whoops! You don\'t have any bookmarks. You can bookmark a show by going to its page. You
-        will be notified of upcoming releases of shows that you bookmark.</string>
-    <string name="share_text">Hey, check out this great anime: %s</string>
-    <string name="refresh">Refresh</string>
-    <string name="search">Search</string>
-    <string name="downloads">Downloads</string>
-    <string name="magnet">Magnet</string>
-    <string name="torrent">Torrent</string>
-    <string name="xdcc">XDCC</string>
-    <string name="no_app_found_for_action">Could not find an app that could handle the performed action!</string>
+    <!-- Days of the week (Schedule's day tabs; neutral names so Settings can reuse them) -->
+    <string name="day_monday">Monday</string>
+    <string name="day_tuesday">Tuesday</string>
+    <string name="day_wednesday">Wednesday</string>
+    <string name="day_thursday">Thursday</string>
+    <string name="day_friday">Friday</string>
+    <string name="day_saturday">Saturday</string>
+    <string name="day_sunday">Sunday</string>
+    <!-- Short day names are stored uppercase (DESIGN.md labels). -->
+    <string name="day_short_monday">MON</string>
+    <string name="day_short_tuesday">TUE</string>
+    <string name="day_short_wednesday">WED</string>
+    <string name="day_short_thursday">THU</string>
+    <string name="day_short_friday">FRI</string>
+    <string name="day_short_saturday">SAT</string>
+    <string name="day_short_sunday">SUN</string>
+
+    <!-- Home (feature/home) -->
+    <string name="home_app_bar_subtitle">HOME</string>
+    <string name="home_summary_title">Today\'s Broadcasts</string>
+    <string name="home_section_upcoming">Upcoming Today</string>
+    <string name="home_section_latest">Latest Releases</string>
+    <string name="home_section_latest_badge">Aired Today</string>
+    <!-- Episode badges are uppercase (DESIGN.md). %1$s: "07", or a batch range "01-24". -->
+    <string name="home_episode">EP %1$s</string>
+    <string name="home_episode_batch">BATCH %1$s</string>
+    <string name="home_episode_movie">MOVIE</string>
+    <string name="cd_episode">Episode %1$s</string>
+    <string name="cd_episode_batch">Batch, episodes %1$s</string>
+    <string name="cd_episode_movie">Movie</string>
+    <string name="home_upcoming_empty">Nothing else is scheduled for today.</string>
+    <string name="home_latest_empty">Nothing has been released yet today.</string>
+    <string name="home_empty">Nothing is on the schedule for today.</string>
+
+    <!-- Schedule (feature/schedule) -->
+    <string name="schedule_app_bar_subtitle">SCHEDULE</string>
+    <!-- %1$s: the full day name, "Thursday". -->
+    <!-- %1$s: the device's offset, "UTC+2" (utc_offset). -->
+    <string name="schedule_time_zone">Times in %1$s</string>
+    <!-- %1$d: the number of shows with that status on the day, before filtering. -->
+    <string name="schedule_filter_all">All (%1$d)</string>
+    <string name="schedule_filter_aired">Aired (%1$d)</string>
+    <string name="schedule_filter_upcoming">Upcoming (%1$d)</string>
+    <string name="schedule_status_aired">Aired</string>
+    <string name="schedule_status_upcoming">Upcoming</string>
+    <string name="schedule_filter_empty_title">No simulcasts found</string>
+    <string name="schedule_filter_empty_message">There are no shows matching this filter for the selected broadcast day.</string>
+    <string name="schedule_filter_reset">Reset Filters</string>
+    <string name="schedule_day_empty_title">Nothing scheduled</string>
+    <!-- %1$s: the full day name, "Thursday". -->
+    <string name="schedule_day_empty_message">No shows are scheduled for %1$s.</string>
+    <!-- Day tabs for TalkBack. %1$s: the full day name; %2$s: the day of the month, "19". -->
+    <string name="cd_schedule_day">%1$s %2$s</string>
+    <string name="cd_schedule_day_today">%1$s %2$s, today</string>
+
+    <!-- All Shows (feature/shows) -->
+    <string name="all_shows_app_bar_subtitle">ALL SHOWS</string>
+    <string name="all_shows_search_placeholder">Search anime title…</string>
+    <string name="cd_all_shows_clear_search">Clear search</string>
+    <!-- How TalkBack reads the "#" section: titles that start with a digit or a symbol. -->
+    <string name="cd_all_shows_other_section">Numbers and symbols</string>
+    <!-- A letter chip's click action for TalkBack. %1$s: the section's name, "A" or "Numbers and symbols". -->
+    <string name="cd_all_shows_jump_to">Jump to %1$s</string>
+    <string name="all_shows_no_results_title">No anime found</string>
+    <string name="all_shows_no_results_message">Try adjusting your spelling or searching by an alternate English or Romaji title.</string>
+
+    <!-- Details (feature/details) -->
+    <string name="cd_details_share">Share</string>
+    <string name="cd_details_open_in_web">Open on SubsPlease</string>
+    <string name="details_bookmark">Bookmark</string>
+    <string name="details_bookmarked">Bookmarked</string>
+    <!-- The bookmark button's state and click action for TalkBack. -->
+    <string name="cd_details_bookmarked">Bookmarked</string>
+    <string name="cd_details_not_bookmarked">Not bookmarked</string>
+    <string name="cd_details_add_bookmark">Add to bookmarks</string>
+    <string name="cd_details_remove_bookmark">Remove from bookmarks</string>
+    <string name="details_synopsis_title">Synopsis</string>
+    <string name="details_synopsis_read_more">Read more</string>
+    <string name="details_synopsis_read_less">Read less</string>
+    <string name="details_synopsis_missing">No synopsis yet.</string>
+    <string name="details_section_downloads">Episodes &amp; Downloads</string>
+    <!-- Group labels are stored uppercase (DESIGN.md labels). -->
+    <string name="details_group_batches">BATCHES</string>
+    <string name="details_group_episodes">EPISODES</string>
+    <!-- %1$s: the release date, "Nov 17, 2026"; %2$s: the time, "12:38 PM". -->
+    <string name="details_episode_released">%1$s · %2$s</string>
+    <!-- An episode row's click action for TalkBack. -->
+    <string name="cd_details_show_downloads">Show downloads</string>
+    <string name="cd_details_hide_downloads">Hide downloads</string>
+    <!-- %1$d: the height, 1080; %2$s: the quality, "FHD". -->
+    <string name="details_resolution">%1$dp %2$s</string>
+    <string name="details_quality_fhd">FHD</string>
+    <string name="details_quality_hd">HD</string>
+    <string name="details_quality_sd">SD</string>
+    <string name="details_resolution_unavailable">Not released</string>
+    <string name="details_source_magnet">Magnet</string>
+    <string name="details_source_torrent">Torrent</string>
+    <string name="details_source_xdcc">XDCC</string>
+    <!-- A source button for TalkBack. %1$s: the source, "Magnet"; %2$s: the resolution, "1080p FHD"; %3$s: the episode, "Episode 20". -->
+    <string name="cd_details_source">%1$s, %2$s, %3$s</string>
+    <string name="details_no_episodes_title">No episodes yet</string>
+    <string name="details_no_episodes_message">No episodes available for this show yet.</string>
+    <!-- %1$d: how many episodes SubsPlease lists at most, 52. -->
+    <string name="details_episode_limit_note">SubsPlease lists only the latest %1$d releases.</string>
+    <!-- The shared text. %1$s: the show title; %2$s: its page, "https://subsplease.org/shows/<slug>/". -->
+    <string name="details_share_text">%1$s\n%2$s</string>
+    <string name="details_no_torrent_app">No torrent app found</string>
+    <string name="details_no_app_for_link">No app can open this link</string>
+    <string name="details_copy_link">Copy link</string>
+    <string name="details_link_copied">Link copied</string>
+    <!-- The clipboard entry's label (not shown on most devices). -->
+    <string name="details_clip_label">Link</string>
+    <string name="details_alerts_denied">New-episode alerts are off. You can turn them on in Settings.</string>
+
+    <!-- Bookmarks (feature/bookmarks) -->
+    <string name="bookmarks_app_bar_subtitle">BOOKMARKS</string>
+    <string name="bookmarks_sort_recently_added">Recently added</string>
+    <string name="bookmarks_sort_title">Title (A–Z)</string>
+    <string name="bookmarks_sort_release_time">Release time</string>
+    <!-- Labels are stored uppercase (DESIGN.md labels). -->
+    <string name="bookmarks_header_title">SAVED SHOWS</string>
+    <string name="bookmarks_alerts_on">ALERTS ON</string>
+    <string name="bookmarks_alerts_off">ALERTS OFF</string>
+    <string name="cd_bookmarks_alerts_on">New-episode alerts are on. Opens Settings</string>
+    <!-- Alerts switched off in Settings. -->
+    <string name="cd_bookmarks_alerts_switched_off">New-episode alerts are off. Opens Settings</string>
+    <!-- Alerts blocked by Android (permission, app or channel notifications off). -->
+    <string name="cd_bookmarks_alerts_off">New-episode alerts are off. Turns them on</string>
+    <!-- %1$s: the date the show was bookmarked, "Nov 18, 2026". -->
+    <string name="bookmarks_added_on">Added %1$s</string>
+    <!-- The next airing, uppercase. %1$s: the time, "9:30 PM". -->
+    <string name="bookmarks_airing_today">TODAY %1$s</string>
+    <!-- %1$s: the short day name, "MON"; %2$s: the time, "9:30 PM". -->
+    <string name="bookmarks_airing_day">%1$s %2$s</string>
+    <string name="bookmarks_not_airing">NOT AIRING</string>
+    <!-- A card's click action for TalkBack. -->
+    <string name="cd_bookmarks_open">Open details</string>
+    <!-- %1$s: the show title. -->
+    <string name="cd_bookmarks_remove">Remove %1$s from bookmarks</string>
+    <!-- %1$s: the show title. -->
+    <string name="bookmarks_removed">Removed %1$s</string>
+    <string name="bookmarks_undo">Undo</string>
+    <string name="bookmarks_empty_title">No bookmarks yet</string>
+    <string name="bookmarks_empty_message">Bookmark a show from its page to keep it here. You\'ll get a notification when a new episode is out.</string>
+    <string name="bookmarks_empty_action">Discover airing shows</string>
+    <string name="bookmarks_alerts_denied">Notifications are off for BakaMitai.</string>
+    <string name="bookmarks_alerts_settings">Settings</string>
+
+    <!-- Settings (feature/settings) -->
+    <string name="settings_title">Settings</string>
+    <!-- Section titles are stored uppercase (DESIGN.md labels). -->
+    <string name="settings_section_general">GENERAL</string>
+    <string name="settings_section_appearance">APPEARANCE</string>
+    <string name="settings_section_notifications">NOTIFICATIONS</string>
+    <string name="settings_section_about">ABOUT</string>
+    <!-- A picker row for TalkBack: %1$s the setting, %2$s its current value, "Theme, System default". -->
+    <string name="cd_settings_picker">%1$s, %2$s</string>
+    <!-- Closes a picker dialog without a change. -->
+    <string name="settings_picker_cancel">Cancel</string>
+    <string name="settings_week_start_title">First day of week</string>
+    <string name="settings_time_format_title">Time format</string>
+    <string name="settings_time_format_12h">12-hour (AM/PM)</string>
+    <string name="settings_time_format_24h">24-hour</string>
+    <string name="settings_theme_title">Theme</string>
+    <string name="settings_theme_system">System default</string>
+    <string name="settings_theme_system_description">Follows your device\'s dark &amp; light mode</string>
+    <string name="settings_theme_light">Light</string>
+    <string name="settings_theme_light_description">Always use the light theme</string>
+    <string name="settings_theme_dark">Dark</string>
+    <string name="settings_theme_dark_description">Always use the dark theme</string>
+    <string name="settings_alerts_title">New-episode alerts</string>
+    <string name="settings_alerts_description">Get a notification when a bookmarked show\'s new episode is out</string>
+    <string name="settings_alerts_blocked">Notifications are blocked for BakaMitai.</string>
+    <string name="settings_alerts_allow">Allow notifications</string>
+    <string name="settings_about_title">About BakaMitai</string>
+    <!-- The About row's click action for TalkBack: "double-tap to open in browser". -->
+    <string name="cd_settings_open_in_browser">Open in browser</string>
+    <string name="settings_no_browser">No app can open this link.</string>
+    <!-- %1$s: the app's version name, "2.0.0". -->
+    <string name="settings_footer_version">BakaMitai v%1$s</string>
+    <string name="settings_footer_disclaimer">Unofficial app. Release data from subsplease.org.</string>
+
+    <!-- New-episode notifications (feature/bookmarks/presentation/notification) -->
+    <string name="notification_channel_new_episodes">New episodes</string>
+    <string name="notification_channel_new_episodes_description">When a bookmarked show releases a new episode</string>
+    <!-- %1$s: the episode title, "Episode 8", "Movie". -->
+    <string name="notification_episode_out">%1$s is out</string>
+    <!-- A line of the grouped summary. %1$s: the show title; %2$s: the episode title. -->
+    <string name="notification_summary_line">%1$s · %2$s</string>
+
+    <plurals name="home_summary_airing">
+        <item quantity="one">%d Airing</item>
+        <item quantity="other">%d Airing</item>
+    </plurals>
+    <plurals name="home_summary_available">
+        <item quantity="one">%d Available</item>
+        <item quantity="other">%d Available</item>
+    </plurals>
+    <plurals name="home_section_upcoming_count">
+        <item quantity="one">%d show</item>
+        <item quantity="other">%d shows</item>
+    </plurals>
+    <plurals name="schedule_show_count">
+        <item quantity="one">%d Show Airing</item>
+        <item quantity="other">%d Shows Airing</item>
+    </plurals>
+    <!-- All Shows' section count, stored uppercase (DESIGN.md labels). -->
+    <plurals name="all_shows_section_count">
+        <item quantity="one">%d SHOW</item>
+        <item quantity="other">%d SHOWS</item>
+    </plurals>
+    <!-- All Shows' footer: the number of titles listed (the matches while searching). -->
+    <plurals name="all_shows_footer_count">
+        <item quantity="one">Showing %d show</item>
+        <item quantity="other">Showing %d shows</item>
+    </plurals>
+    <!-- Details' downloads header: the number of episodes (batches not counted), stored uppercase (DESIGN.md labels). -->
+    <plurals name="details_episode_count">
+        <item quantity="one">%d EPISODE</item>
+        <item quantity="other">%d EPISODES</item>
+    </plurals>
+    <!-- Bookmarks' counter row. -->
+    <plurals name="bookmarks_count">
+        <item quantity="one">%d show</item>
+        <item quantity="other">%d shows</item>
+    </plurals>
+    <!-- A notification's sub-text after a backlog. -->
+    <plurals name="notification_more_new_episodes">
+        <item quantity="one">%d new episode</item>
+        <item quantity="other">%d new episodes</item>
+    </plurals>
+    <!-- The grouped summary's text: one line per show. -->
+    <plurals name="notification_summary">
+        <item quantity="one">%d new episode</item>
+        <item quantity="other">%d new episodes</item>
+    </plurals>
 </resources>

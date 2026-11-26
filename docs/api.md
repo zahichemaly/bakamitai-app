@@ -1,0 +1,302 @@
+# SubsPlease API Reference
+
+BakaMitai gets all of its anime data from `https://subsplease.org`. The site has **no official public API**, so this file documents the undocumented JSON endpoints its own website uses, the HTML pages we scrape where no JSON exists, and the RSS and XDCC sources.
+
+What the app does with this data (which screen uses which call, and how) is in [context.md](context.md#4-data-mapping-per-screen).
+
+> Everything here was verified against the live site on **2026-11-18**. The API is undocumented and can change without notice. Keep parsing tolerant (unknown keys ignored, every field nullable or defaulted) and keep all SubsPlease-specific knowledge inside the `data` layer.
+
+---
+
+## 1. Basics
+
+- **Base URL:** `https://subsplease.org`
+- **JSON API:** `GET https://subsplease.org/api/?f=<function>&tz=<IANA zone>&…`
+- **`tz` is required on every API call.** Pass the device's IANA zone (`TimeZone.currentSystemDefault().id`, e.g. `Asia/Beirut`). It decides which day counts as "today", which weekday each show falls on, and the `time` values returned. Without it, `f=show`, `f=latest` and the weekly `f=schedule` return `200` with an **empty body**. An **unknown** zone (`tz=Not/AZone`) doesn't fail: the server falls back to GMT and echoes `"tz":"Etc/GMT"` in the schedule responses. Android reports IANA ids, which the server accepts (half-hour offsets such as `Asia/Kolkata` work).
+- **Content-Type is wrong.** API responses are served as `text/html; charset=UTF-8`, not `application/json`. Register Ktor's JSON content negotiation for `ContentType.Any` (or read the body as text and decode with `Json`). Otherwise deserialization fails.
+- **No auth, no API key.** A plain app User-Agent (e.g. `BakaMitai/<version> (Android)`) is accepted. No Cloudflare challenge was observed for the API, the HTML pages or images.
+- **No caching headers** (`cf-cache-status: DYNAMIC`). Cache in-app (see [§7](#7-client-guidelines)).
+- **Images:** `image_url` is a site-relative path (e.g. `/wp-content/uploads/2026/07/158138.jpg`). Prefix it with `https://subsplease.org`. The path `/wp-includes/images/image-coming-soon-placeholder.png` means "no cover yet": map it to `null` and show our own placeholder.
+- **Show page URL:** `https://subsplease.org/shows/<slug>/`. The **slug** (called `page` in JSON) is the stable **show ID** used across the whole app.
+
+---
+
+## 2. Endpoints at a glance
+
+| Purpose | Request | Format | Used by |
+|---|---|---|---|
+| Today's schedule | `/api/?f=schedule&h=true&tz=<tz>` | JSON | Home, Schedule (today's `aired`) |
+| Weekly schedule | `/api/?f=schedule&tz=<tz>` | JSON | Schedule |
+| Latest releases | `/api/?f=latest&tz=<tz>&p=<1\|2>` | JSON | Home |
+| Search releases | `/api/?f=search&tz=<tz>&s=<query>` | JSON | Home (newest releases with an empty `s`, episode-number fallback) |
+| Show episodes | `/api/?f=show&tz=<tz>&sid=<sid>` | JSON | Details |
+| All shows list | `/shows/` | HTML | All Shows |
+| Show page | `/shows/<slug>/` | HTML | Details (title, synopsis, cover, `sid`) |
+| XDCC search page | `/xdcc/?search=<xdcc>` | HTML (web) | Details → XDCC button |
+| RSS feeds | `/rss/?r=<1080\|720\|sd>[&t]` | RSS XML | Not used (see [§6](#6-rss-feeds-reference-only)) |
+
+---
+
+## 3. JSON endpoints
+
+### 3.1 Today's schedule
+
+`GET /api/?f=schedule&h=true&tz=<tz>`
+
+```json
+{
+  "tz": "America/New_York",
+  "schedule": [
+    {
+      "title": "Sasaki to Pii-chan S2",
+      "page": "sasaki-to-pii-chan-s2",
+      "image_url": "/wp-content/uploads/2026/10/159979.jpg",
+      "time": "08:00",
+      "aired": false
+    }
+  ]
+}
+```
+
+- `schedule` is an **array** sorted by `time`.
+- `time` is `"HH:mm"` (24-hour) **in the requested `tz`**, with no date.
+- `aired` flips to `true` around release time, but **it's unverified whether it follows the actual release or the clock.** One show scheduled for 10:30 New York was `false` at 15:26Z and `true` at 15:33Z, when its release was already listed. If it follows the clock, a delayed show reads `aired: true` before its release exists. Home therefore also drops a show from Upcoming once today's release for it is known.
+- `page` **may be missing.** The site's own script guards with `if (val.page)`. Drop items without it, since the slug is the app's show ID.
+- **There's no episode number here.** [context.md §4.1](context.md#41-home) explains how to get one.
+
+### 3.2 Weekly schedule
+
+`GET /api/?f=schedule&tz=<tz>`
+
+```json
+{
+  "tz": "America/New_York",
+  "schedule": {
+    "Monday":  [ { "title": "PSYREN", "page": "psyren", "image_url": "/wp-content/uploads/2026/10/160405.jpg", "time": "09:30" } ],
+    "Tuesday": [ … ],
+    …
+    "Sunday":  [ … ]
+  }
+}
+```
+
+- `schedule` is an **object keyed by English weekday name** (`"Monday"` … `"Sunday"`). Don't depend on key order. Map each name to `kotlinx.datetime.DayOfWeek`.
+- **Shape and volume** (checked 2026-11-18): all seven keys were present, with 3–14 items per day and **57 shows per week**, the same set in every zone. Each show appears **once** per week. Items have exactly `title`, `page`, `image_url` and `time`, with no HTML entities. The placeholder cover ([§1](#1-basics)) appears here too.
+- Items have **no `aired` field**. The weekly schedule is a template: it can't tell a delayed, skipped or finished episode from one that aired.
+- **Today's bucket equals [today's schedule](#31-todays-schedule)**: the same slugs and times (checked for New York and Tokyo). So today's `aired` can be joined onto the weekly bucket by slug, which is what Schedule does.
+- Weekday buckets are computed in the requested `tz`, so a show can move to a different day depending on the user's zone (*Doumo, Suki na Hito ni…* is Monday 07:30 in New York and Monday 21:30 in Tokyo).
+- Items are sorted by `time` within a day, but **ties come in no defined order**. Sort by time, then title.
+- **Decode defensively:** PHP encodes an empty associative array as `[]`, so an empty `schedule` would arrive as `[]` rather than `{}` (not seen live). Treat `schedule` = `[]`, `null` or missing as "no shows", and a day value that isn't an array as an empty day.
+
+### 3.3 Latest releases
+
+`GET /api/?f=latest&tz=<tz>&p=<page>`
+
+```json
+{
+  "Sora wa Akai Kawa no Hotori - 20": {
+    "time": "New",
+    "release_date": "Tue, 17 Nov 2026 12:38:52 -0500",
+    "show": "Sora wa Akai Kawa no Hotori",
+    "episode": "20",
+    "downloads": [
+      { "res": "480",  "magnet": "magnet:?xt=urn:btih:…" },
+      { "res": "720",  "magnet": "magnet:?xt=urn:btih:…" },
+      { "res": "1080", "magnet": "magnet:?xt=urn:btih:…" }
+    ],
+    "xdcc": "%22%5BSubsPlease%5D+Sora+wa+Akai+Kawa+no+Hotori+-+20%22",
+    "image_url": "/wp-content/uploads/2026/07/158138.jpg",
+    "page": "sora-wa-akai-kawa-no-hotori"
+  },
+  "…": { … }
+}
+```
+
+- The response is an **object keyed by `"<show> - <episode>"`**. Decode it as `Map<String, ReleaseDTO>` and use the **values**. Order is newest first, but sort by `release_date` yourself.
+- **20 items per page.** Only `p=1` and `p=2` work. From `p=3` on, the response is `{"error":"limit_reached"}`, which has a different shape. Handle it.
+- **The feed can lag by days.** On 2026-11-18 at 15:21 UTC, page 1 started on Sun 15 Nov while releases up to Wed 18 Nov existed; it had caught up by about 15:40 UTC, and lagged again at 20:28 UTC. The website's homepage makes the same call, so it's stale too. [Search with an empty `s`](#34-search-releases) stayed current, so Home merges both and removes duplicates. On 2026-11-19 at 09:57 UTC it was 3 days behind again.
+- `release_date` is RFC 1123 (`EEE, dd MMM yyyy HH:mm:ss Z`). **Always parse it to an `Instant`.** Its offset **varies per item**, even for one show: some items use the requested `tz` (`-0500`), others the server's zone (`+0100`, `+0200` and `-0300` were all seen on one day). Never trust the offset; convert the `Instant` to the device zone yourself.
+- **`release_date` is currently 1 hour early.** See [§3.5](#35-show-episodes); it applies to this endpoint too.
+- `time` is only a display label: `"New"` (released in the last ~24 h) or `"Nov 17th"`. **Never use it in logic.**
+- `page` may be missing, as in [§3.1](#31-todays-schedule). Drop those items.
+- Titles (`show`) come through plain: no HTML entities or `\u` escapes were seen in schedule, latest or search responses, so no entity decoding is needed for JSON.
+- `episode` is a **string**: usually `"07"`, but it can be a batch range (`"01-24"`) or `"Movie"`. Don't assume it's numeric.
+- `downloads` here has **only `magnet`** (no `torrent`, no per-resolution `xdcc`).
+- `xdcc` is already URL-encoded. Append it as-is to `https://subsplease.org/xdcc/?search=`. **Don't encode it again.**
+
+### 3.4 Search releases
+
+`GET /api/?f=search&tz=<tz>&s=<query>`
+
+- Same shape as [latest releases](#33-latest-releases): an object keyed by `"<show> - <episode>"`, with `page` and `image_url`, and magnet-only `downloads`.
+- **An empty query (`s=`) returns the 20 newest releases**, in the same shape and without the lag `f=latest` sometimes has. `p` is ignored. The website calls it when its search box is cleared. Its window is about **45 hours** of releases (20 items, 9–10 releases per busy day; checked 2026-11-19), newest first. A search for a title returns that show's releases newest first (filter by `page`).
+- **No results returns `[]`**, an empty **array** rather than an object. Decode defensively: check whether the root is a `JsonArray` or a `JsonObject`.
+- `time` labels are `"New"` / `"Nov 17th"` for an empty query and `"New"` / `"MM/dd/yy"` otherwise. Display only, never parse. `release_date` has the same offset and 1-hour issues as [latest releases](#33-latest-releases).
+- Results appear capped (30 were returned for `s=sora`) and can include several shows whose titles match. Filter by `page` when you need one show.
+- This searches **releases**, not the show catalogue. Use the [all shows list](#41-all-shows-list) for show lookups.
+- URL-encode `s`.
+
+### 3.5 Show episodes
+
+`GET /api/?f=show&tz=<tz>&sid=<sid>`
+
+```json
+{
+  "episode": {
+    "Sora wa Akai Kawa no Hotori - 01": {
+      "time": "07/07/26",
+      "release_date": "Tue, 07 Jul 2026 19:41:51 +0200",
+      "show": "Sora wa Akai Kawa no Hotori",
+      "episode": "01",
+      "downloads": [
+        {
+          "res": "1080",
+          "torrent": "https://nyaa.si/view/2129523/torrent",
+          "magnet": "magnet:?xt=urn:btih:…",
+          "xdcc": "%22%5BSubsPlease%5D+Sora+wa+Akai+Kawa+no+Hotori+-+01+%281080p%29%22"
+        }
+      ]
+    }
+  },
+  "batch": []
+}
+```
+
+- `sid` is a numeric show ID that **only appears in the show page HTML** (see [§4.2](#42-show-page)). It's not the slug.
+- `episode` and `batch` are **objects keyed by `"<show> - <episode>"` when they have entries, and `[]` (an empty array) when they don't**. Use a custom serializer or decode them as `JsonElement`.
+- An unknown `sid` returns `{"batch":[],"episode":[]}`.
+- `downloads` entries here include **`torrent`**, **`magnet`** and a **per-resolution `xdcc`** search string (already URL-encoded).
+- `time` is `"MM/dd/yy"` or `"New"`. Display only.
+- **At most 52 entries in `episode`**, newest first (checked 2026-11-19: One Piece and Detective Conan return exactly 52). Older episodes aren't available from any endpoint; the site shows the same 52. Batches come separately in `batch`. Sort by `release_date` anyway.
+- **Episode labels** are strings: plain numbers (`"07"`, `"1180"`), revisions as separate entries next to the original (`"1216v2"` after `"1216"`), specials (`"Egghead SP11"`), named specials (`"The Counterfeit Case of Ultra 30"`), `"Movie"` as the only entry of a movie, and ranges (`"01-28"`) in `batch`. The JSON key always equals `"<show> - <episode>"`.
+- **Downloads:** every entry checked had `res`, `magnet`, `torrent` and `xdcc` filled, ordered 480 → 720 → 1080. `360` and `540` appear live as the SD value. The site still renders three slots (SD / 720p / 1080p) and greys out a missing one.
+- `release_date` here **ignores `tz`**: `tz=Asia/Tokyo` returned the same values. Its offset is **per show**, not the server's (`-0500`/`-0400` for most shows, `+0100`/`+0200` and `+0800` for others). Parse to `Instant` and convert to the device zone yourself.
+- Sizes: 3 KB for a one-entry movie up to about 159 KB for 52 entries (about 10 KB gzipped).
+- **The instant is 1 hour early since late October / early November 2026**, most likely since **US** DST ended (1 Nov): *Kyouran Reijou Nia Liston* episode 04 (27 Oct) matched its slot and episode 05 (3 Nov) was 56 min early. It will likely end when US DST starts (14 Mar 2027). Checked against nyaa.si upload times for *Tensei Shitara Ken Deshita S2*: episodes 07 (11 Nov) and 08 (18 Nov) are an hour early, episode 04 (21 Oct) is correct. The schedule `time` matches the real release. The app shows `release_date` as-is, because it can't tell when the server gets fixed; so in winter, release times look an hour early, and a release in the first local hour after midnight counts as the previous day.
+- **Releases follow the weekly slot within minutes:** for 37 of 39 releases checked on 2026-11-19, the real release (with the skew removed) came 1–6 min after the show's weekly-schedule slot. Exceptions run later (+35, +69 min), and an older episode can be released after a newer one (*Gensou Suikoden* 02 after 07).
+- This response has **no `image_url` and no `page`**. Those come from the [show page](#42-show-page).
+
+### 3.6 Resolutions
+
+- `res` is a string: `"480"`, `"720"` or `"1080"` were observed. The site's own JS also treats `"360"` and `"540"` as **SD**.
+- Map to a domain enum: `SD` (360/480/540, displayed with its actual value, e.g. "480p"), `HD` (720p), `FHD` (1080p). Ignore unknown values rather than crashing.
+
+---
+
+## 4. HTML pages (scraped)
+
+The site is WordPress. These pages are server-rendered, but the markup isn't strictly valid, so parse leniently.
+
+### 4.1 All shows list
+
+`GET /shows/`, about 1,260 entries. No `tz` needed: the page doesn't depend on the zone.
+
+```html
+<div class="all-shows">
+  <h3 class="alphanum-category" id="A">A</h4>          <!-- note: mismatched closing tag on the live site -->
+  <div class="all-shows-link"><a href="/shows/86-eighty-six" title="86 - Eighty Six">86 - Eighty Six</a></div>
+  …
+</div>
+```
+
+- Every `div.all-shows-link > a` is one show:
+  - **slug** = `href` without `/shows/` and without a trailing `/`
+  - **title** = the `title` attribute (or the link text), **HTML-entity decoded** (`&amp;`, `&#8217;`, …)
+- The page has its own headers (`1`, `2`, …, `A` … `Z`). **Ignore them.** The app computes its own sections (see [context.md §3.3](context.md#33-all-shows)).
+- The page is about 200 KB (about 41 KB gzipped on the wire). Fetch it once and cache it (see [§7](#7-client-guidelines)).
+
+Checked live on 2026-11-18 (two requests):
+- **1,263 entries but only 1,249 distinct slugs.** 12 slugs are listed under 2–3 titles that share one show page (seasons, specials, alternate names: `fruits-basket-2019` has "Fruits Basket (2019)", "… S2" and "… S3"). No title appears twice. So the slug alone can't key a row; `slug` + `title` can. All Shows keeps one row per title.
+- **Scope the selector to `div.all-shows`.** The links sit flat in that one container (no per-letter wrapper), so the 32 mismatched headers don't get in the way. The site menu also links to `/shows/` outside it.
+- `href` is always `/shows/<slug>` with no trailing slash, and the `title` attribute always equals the link text.
+- **Entities:** no title uses an entity reference today, but two contain a **raw `&`** ("A3! Season Autumn & Winter"). Decoding must still handle `&amp;`, `&#8217;` and `&quot;` and leave a bare `&` alone (Ksoup does both). Every title is ASCII.
+- **First characters:** 9 titles start with a digit (they go under "#"); none with a symbol. "mono" starts lowercase and belongs under M. Every letter A–Z has at least one show.
+- **Slugs are opaque:** `d_cide-traumerei-the-animation` contains `_`.
+- **The page's order isn't case-insensitive alphabetical**, so the app sorts the list itself.
+
+### 4.2 Show page
+
+`GET /shows/<slug>/`
+
+| Data | Where in the HTML |
+|---|---|
+| Title | `h1.entry-title` (text, entity-decoded) |
+| Synopsis | `div.series-syn` → its `<p>` elements (ignore the `<h2>Synopsis</h2>`). Join paragraphs with blank lines, strip tags, decode entities. It can be missing or empty. |
+| Cover | `#secondary img.img-responsive` → `src` (site-relative, same rules as `image_url`) |
+| `sid` | `table#show-release-table` → the `sid` attribute (e.g. `sid="1199"`) |
+
+The episodes table on this page is **empty in the HTML**. The site fills it with JS from [`f=show&sid=…`](#35-show-episodes), which is what we do too.
+
+Checked live on 2026-11-19 (11 shows):
+- **Request the trailing-slash form.** `shows/<slug>` without it returns a **301** to `shows/<slug>/`. An unknown slug returns **404** (a WordPress "Page not found" page) → `DomainError.NotFound`.
+- **The page title is entity-encoded and can differ from the JSON titles:** `A3! Season Autumn &amp; Winter`, `BanG Dream! It&#8217;s MyGO!!!!!` (a curly apostrophe; the JSON has a straight one), `Dark Machine &#8211; The Animation` (an en dash; the schedule and `/shows/` have a hyphen). Details shows the page's decoded title.
+- **Synopsis:** one to three `<p>` after `<h2>Synopsis</h2>`, raw UTF-8 punctuation, no entities seen. `<p><i>Synopsis will be added later</i></p>` is a **placeholder**: treat it as no synopsis.
+- **Cover:** always present, site-relative, and it can be **newer than the schedule's**: a show whose `image_url` is still the "coming soon" placeholder can already have a real cover here.
+- Pages are about 29 KB and take about 0.4–0.5 s.
+
+---
+
+## 5. XDCC
+
+- **Button behavior:** open `https://subsplease.org/xdcc/?search=<xdcc>` in the browser, where `<xdcc>` is the already-encoded `xdcc` value from the API. This matches what the site does.
+- Reference only (not needed for v1): the page gets its data from `GET https://subsplease.org/xdcc/search.php?t=<url-encoded query>`. That endpoint **returns an empty body unless the request has `Referer: https://subsplease.org/xdcc/`**. It replies with JavaScript lines rather than JSON:
+  ```text
+  p.k[1] = {b:"Ginpachi-Sensei", n:4450, s:678, f:"[SubsPlease] Sora wa Akai Kawa no Hotori - 20 (720p) [B97C27CB].mkv"};
+  ```
+  Here `b` = bot nick, `n` = pack number, `s` = size in MiB and `f` = file name. The IRC command is `/msg <b> xdcc send #<n>` on `irc://irc.rizon.net/subsplease`. A later version could offer a "Copy IRC command" option built from this.
+
+---
+
+## 6. RSS feeds (reference only)
+
+`https://subsplease.org/rss/` (all resolutions), `?r=1080`, `?r=720`, `?r=sd`. Add `&t` (e.g. `?t&r=1080`) to get `.torrent` links instead of magnets. Each feed has the latest **50** files.
+
+```xml
+<item>
+  <title>[SubsPlease] Sora wa Akai Kawa no Hotori - 20 (1080p) [064C1798].mkv</title>
+  <link>magnet:?xt=urn:btih:…</link>            <!-- or https://nyaa.si/view/<id>/torrent with &t -->
+  <guid isPermaLink="false">KTHKFGVV2T3C6UGLCH22EPT6BW6ZOMAD</guid>
+  <pubDate>Tue, 17 Nov 2026 10:38:52 +0000</pubDate>
+  <category>Sora wa Akai Kawa no Hotori - 1080</category>
+  <subsplease:size>1.3 GiB</subsplease:size>
+</item>
+```
+
+**Don't use RSS as a primary source:**
+
+- It has no slug and no cover, so items can't be tied to a show without fuzzy title matching.
+- One item per file, not per episode.
+- **`pubDate` is wrong**: it's labelled `+0000` but was 7 hours off the JSON API's `release_date` for the same file.
+
+The JSON API covers every screen. RSS is listed only so nobody rediscovers it as an option.
+
+---
+
+## 7. Client guidelines
+
+- **One shared Ktor `HttpClient`** for SubsPlease (`common/data/network/`):
+  - default base URL `https://subsplease.org`
+  - a User-Agent header (`BakaMitai/<versionName> (Android)`)
+  - JSON negotiation registered for `ContentType.Any` (see [§1](#1-basics))
+  - `ignoreUnknownKeys = true`, `coerceInputValues = true`, `explicitNulls = false`
+  - sensible timeouts
+- **Polymorphic roots.** Decode `f=search`, `f=show` and paged `f=latest` responses through `JsonElement` before mapping:
+  - `[]` = empty
+  - `{"error": …}` = end of pages
+- **Be a polite scraper.** SubsPlease is a volunteer-run site:
+  - no polling and no background sync
+  - fetch on screen open and on pull-to-refresh only
+  - **Exception: new-episode alerts (Bookmarks plan, 2026-11-19).** Only while the user has bookmarks and new-episode alerts are on (the Settings switch, and Android lets the app post notifications). Event-driven, never periodic: a check runs 10 minutes after a bookmarked show's weekly slot, and retries over 24 hours (10 min, 30 min, 1 h, 2 h, 4 h, 8 h, 16 h, 24 h after the slot) only while that episode isn't out. A check makes **one** `f=search&s=` request for all bookmarks (`f=latest&p=1` only if it fails), plus one `f=search&s=<title>` per late show only when the newest releases no longer reach back to its slot (at most 5 per check). Slots come from `f=schedule` at most once a day. Budget: about one request per bookmarked show per week when episodes are on time.
+- **In-memory caches**, all invalidated by pull-to-refresh:
+  - All shows list: for the process lifetime
+  - weekly schedule: about 1 h
+  - show page plus episodes, per slug: about 10 min. The `sid` from a parsed page can be reused after the cache expires, so a refresh can skip straight to `f=show` when only the episodes are stale.
+- **Errors** go through `safeApiCall` → `DomainError` → UI error model (`best-practices` skill). A scrape that can't find a required element (for example, no `sid`) is a **parsing error**, not a crash.
+- **HTML parsing** uses **Ksoup** (`com.fleeksoft.ksoup:ksoup`), approved 2026-11-19 for the `data` layer only, behind one `[Name]HtmlParser` class per page. Parse off the main thread. A page that parses to nothing is a parsing error (`DomainError.InvalidData`), not an empty list.
+- **Tests:** keep trimmed real responses as fixtures (`app/src/test/resources/subsplease/…`) and test DTO decoding and HTML parsing with Ktor `MockEngine`. Cover every quirk in this file:
+  - empty `[]` roots
+  - `limit_reached`
+  - placeholder image
+  - batch and "Movie" episodes
+  - mismatched HTML tags
+  - entity-encoded titles

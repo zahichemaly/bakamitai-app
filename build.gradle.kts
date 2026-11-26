@@ -1,12 +1,12 @@
-// Top-level build file where you can add configuration options common to all sub-projects/modules.
+// Top-level build file. Declarative only: every plugin is declared here with `apply false` so it is on the
+// build classpath for the modules and for the build-logic convention plugins.
 plugins {
-    val gradle = "8.3.0"
-    val kotlin = "1.9.22"
-    val ksp = "1.9.22-1.0.16"
-    val gms = "4.4.1"
-    id("com.android.application") version gradle apply false
-    id("com.android.library") version gradle apply false
-    id("org.jetbrains.kotlin.android") version kotlin apply false
-    id("com.google.devtools.ksp") version ksp apply false
-    id("com.google.gms.google-services") version gms apply false
+    alias(libs.plugins.android.application) apply false
+    alias(libs.plugins.kotlin.android) apply false
+    alias(libs.plugins.kotlin.compose) apply false
+    alias(libs.plugins.kotlin.serialization) apply false
+    alias(libs.plugins.koin.compiler) apply false
+    alias(libs.plugins.detekt) apply false
+    alias(libs.plugins.ksp) apply false
+    alias(libs.plugins.room) apply false
 }
