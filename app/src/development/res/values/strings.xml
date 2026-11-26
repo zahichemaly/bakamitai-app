@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The development flavor's overrides of app/src/main/res: it installs next to production, so its name differs. -->
+<resources>
+    <string name="app_name">BakaMitai Dev</string>
+</resources>

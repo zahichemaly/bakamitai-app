@@ -8,7 +8,7 @@ Android app, being rewritten from scratch. The repo holds a fresh Jetpack Compos
 - Root package `com.zc.bakamitai` (`app/src/main/java/com/zc/bakamitai/`).
 - `minSdk` 27, `compileSdk` / `targetSdk` 37. AGP 9.5.1 (built-in Kotlin), Gradle 9.6.0, Kotlin 2.4.20, Compose BOM 2026.09.00.
 - Every dependency and plugin is declared in `gradle/libs.versions.toml`.
-- Two product flavors (dimension `environment`, declared in `app/build.gradle.kts`): `development` (application id `com.zc.bakamitai.dev`, version name `-dev`) and `production` (`com.zc.bakamitai`). Day-to-day work uses `developmentDebug`. `developmentRelease` is signed with the repo's `debug.keystore`; `productionRelease` is unsigned until a release key is set up.
+- Two product flavors (dimension `environment`, declared in `app/build.gradle.kts`): `development` (application id `com.zc.bakamitai.dev`, version name `-dev`, app name "BakaMitai Dev" from `app/src/development/res/values/strings.xml`, also shown in the top bar) and `production` (`com.zc.bakamitai`, "BakaMitai"). Day-to-day work uses `developmentDebug`. `developmentRelease` is signed with the repo's `debug.keystore`; `productionRelease` is unsigned until a release key is set up.
 - `.github/workflows/build-release-apk.yml` (manual run) builds `assembleDevelopmentRelease` and publishes the APK as a GitHub release.
 - Work happens on `develop`; `master` is the default branch for PRs.
 

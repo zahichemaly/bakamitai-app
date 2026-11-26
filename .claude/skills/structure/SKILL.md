@@ -219,6 +219,7 @@ Rules are in `library-management`.
 | A screen's loading layout `[Name]Skeleton` | `private` in that `[Name]Screen.kt` |
 | Composable used by one screen only | `private` in that `[Name]Screen.kt` |
 | MVI contract, ViewModel, Route, Screen | `feature/[name]/presentation/` |
+| A resource that differs per product flavor (e.g. the development flavor's `app_name`, "BakaMitai Dev") | `app/src/development/res/` or `app/src/production/res/`, same name as the `app/src/main/res/` resource it overrides |
 | Library / plugin dependency declaration | `gradle/libs.versions.toml` |
 | Custom Gradle task, convention plugin, shared build config | `build-logic/convention/src/main/kotlin/` |
 | Unit test for `X` | `app/src/test/java/com/zc/bakamitai/<same package as X>/XTest.kt` |
