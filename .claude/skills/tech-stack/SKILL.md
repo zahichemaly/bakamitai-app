@@ -34,7 +34,7 @@ Quality rules for using these libraries (performance, Detekt, error handling, te
 | Serialization | kotlinx.serialization (JSON) |
 | HTML parsing | Ksoup (`com.fleeksoft.ksoup:ksoup`), scraped SubsPlease pages only, inside a `data/remote/[Name]HtmlParser` |
 | Persistence | Jetpack DataStore (Preferences) for settings; **Room** for structured, queryable data (`room-runtime`, `room-compiler` through **KSP**, which runs Room's compiler only) |
-| Background work | WorkManager (`CoroutineWorker`, unique one-time work), built by Koin (`@KoinWorker`, Koin WorkManager) |
+| Background work | WorkManager (`CoroutineWorker`; unique one-time work for API checks, unique periodic work for local-only jobs such as automatic backups), built by Koin (`@KoinWorker`, Koin WorkManager) |
 | Notifications | AndroidX Core `NotificationCompat` / `NotificationManagerCompat`, behind a domain port (`[Name]Notifier`) |
 | DI | Koin (Android, Compose, AndroidX WorkManager) through the Koin compiler plugin, not KSP |
 | Static analysis | Detekt + ktlint formatting + Compose rules |
@@ -456,6 +456,8 @@ runBlocking { dataStore.data.first() }                                          
 - A worker is a background entry point, like a ViewModel: it calls its feature's use cases and never imports `presentation`. WorkManager persists its class name: **NEVER** rename or move a shipped worker (or cancel its unique work by name in the same update).
 - Scheduling goes through a domain port (`[Name]Scheduler` in `domain/repository/`), implemented by `[Name]SchedulerImpl` in `data/worker/` with unique work names and explicit `ExistingWorkPolicy`s. Use cases call the port; nothing else touches `WorkManager`.
 - One-time unique work, with a network constraint when it calls the API. No periodic polling of SubsPlease beyond what `docs/api.md` §7 allows.
+- Unique **periodic** work only for local-only jobs that make no request (the automatic backups, `BackupSchedulerImpl`: `ExistingPeriodicWorkPolicy.UPDATE`, cancelled by name when switched off).
+- Files the user picks (the backup folder and files) go through the **Storage Access Framework** (`ActivityResultContracts.OpenDocumentTree` / `OpenDocument` in the Route, `ContentResolver` / `DocumentsContract` in a `data/local/` source); never storage permissions or `File` paths outside the app's own directories.
 
 ### Notifications
 

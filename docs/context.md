@@ -128,9 +128,12 @@ A pushed screen (back arrow; it covers the tabs, bottom bar or rail included), o
 | **Time format** | 12-hour (AM/PM), 24-hour | 12-hour | Every time shown in the app, including screens already open |
 | **Theme** | System default, Light, Dark | System default | App color scheme and the system bars' icon colors, applied before the first frame |
 | **New-episode alerts** | On, Off | On | Off → no background checks' requests and no permission request on the first bookmark ([§3.7](#37-new-episode-alerts)); turning it on asks for the notification permission if Android blocks notifications |
+| **Backup and restore** | — | — | The DATA section's row: opens the Backup and restore screen (below). |
 | **About** | — | — | Opens `https://github.com/zahichemaly/BakaMitai`. Debug builds only: release builds have no About section. |
 
 **Footer**: "BakaMitai v{versionName}" (the build's `versionName`) and the disclaimer "Unofficial app. Release data from subsplease.org." Plan: [6-settings.md](6-settings.md).
+
+**Backup and restore** (pushed over Settings, Mihon's model): a **backup folder** chosen once with the system folder picker (the app keeps access to it); **Create backup** writes `bakamitai_<date>_<time>.json` (every bookmark, the settings and the Bookmarks sort) and shows the last backup's time; **Restore backup** picks a file, asks, then adds the backup's bookmarks that aren't saved yet (tracking alerts from now) and replaces the settings; **Automatic backups** (Off, every 6 / 12 hours, daily, weekly; WorkManager) and **Backups to keep** (1, 2, 3, 5, 10; older BakaMitai backups in the folder are deleted). Plan: [7-backup.md](7-backup.md).
 
 ### 3.7 New-episode alerts
 
@@ -214,7 +217,7 @@ Settings use **Jetpack DataStore**; bookmarks (and their alert-tracking state) u
 
 | Data | Store | Shape |
 |---|---|---|
-| **Settings** | One Preferences DataStore file `settings` (`common/data/local/SettingsLocalDataSource`, `SettingsRepository`, `AppSettings` in `common/`) | Keys stored by enum name: `week_start` (`MONDAY` \| `SUNDAY`), `time_format` (`TWELVE_HOUR` \| `TWENTY_FOUR_HOUR`), `theme_mode` (`SYSTEM` \| `LIGHT` \| `DARK`), `new_episode_alerts` (Boolean, default `true`), and Bookmarks' `bookmarks_sort` (`RECENTLY_ADDED` \| `TITLE` \| `NEXT_AIRING`) |
+| **Settings** | One Preferences DataStore file `settings` (`common/data/local/SettingsLocalDataSource`, `SettingsRepository`, `AppSettings` in `common/`) | Keys stored by enum name: `week_start` (`MONDAY` \| `SUNDAY`), `time_format` (`TWELVE_HOUR` \| `TWENTY_FOUR_HOUR`), `theme_mode` (`SYSTEM` \| `LIGHT` \| `DARK`), `new_episode_alerts` (Boolean, default `true`), Bookmarks' `bookmarks_sort` (`RECENTLY_ADDED` \| `TITLE` \| `NEXT_AIRING`), and the backup settings (`backup_folder_uri`, `backup_folder_name`, `backup_frequency`, `backup_max_count`, `backup_last_at`, [7-backup.md §4.2](7-backup.md#42-backup-preferences)) |
 | **Bookmarks** | Room database `bookmarks.db` (`feature/bookmarks/data/local/`), one table, schema exported to `app/schemas/` | `slug` (primary key), `title`, `cover_url`, `added_at`; the weekly slot (`airing_day`, `airing_minute`, `airing_zone`, `airing_title`, `airing_checked_at`); alert tracking (`tracking_since`, `last_seen_episode`, `last_seen_released_at`, `resolved_through`). Details in [5-bookmarks.md §4.3](5-bookmarks.md#43-local-data). |
 
 - The **slug** is the bookmark key. It's what Details needs to reload the show.
