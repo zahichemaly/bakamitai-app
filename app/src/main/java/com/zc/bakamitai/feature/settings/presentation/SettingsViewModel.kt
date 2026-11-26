@@ -35,8 +35,9 @@ import kotlinx.coroutines.launch
 import org.koin.core.annotation.KoinViewModel
 
 /**
- * The user's preferences, from the settings store, with the alerts status and the app's version. A picker's dialog
- * is opened and closed here (it survives rotation); a choice closes it and is saved at once. The screen follows the
+ * The user's preferences, from the settings store, with the alerts status and the app's version. The About section
+ * is shown on debug builds only. A picker's dialog is opened and closed here (it survives rotation); a choice
+ * closes it and is saved at once. The screen follows the
  * store, so a failed save leaves the stored value shown (and a snackbar). Reducer rules: docs/6-settings.md §5.9.
  */
 @KoinViewModel
@@ -50,13 +51,15 @@ class SettingsViewModel(
     private val getReleaseAlertsStatus: GetReleaseAlertsStatusUseCase,
 ) : ViewModel() {
 
-    /** The app's version (the footer) and source code URL (opened by the About row). Never exposed. */
+    /** The app's version (the footer), source code URL (the About row) and build type. Never exposed. */
     private val appInfo = getAppInfo()
 
     /** The last alerts status read; `null` until read. Never exposed. */
     private val alertsStatus = MutableStateFlow<ReleaseAlertsStatus?>(null)
 
-    private val _state = MutableStateFlow(SettingsState(versionLabel = appInfo.toVersionLabel()))
+    private val _state = MutableStateFlow(
+        SettingsState(versionLabel = appInfo.toVersionLabel(), isAboutVisible = appInfo.isDebugBuild),
+    )
     val state: StateFlow<SettingsState> =
         combine(_state, observeSettings(), alertsStatus) { state, settings, status ->
             state.copy(

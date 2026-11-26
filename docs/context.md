@@ -128,7 +128,7 @@ A pushed screen (back arrow; it covers the tabs, bottom bar or rail included), o
 | **Time format** | 12-hour (AM/PM), 24-hour | 12-hour | Every time shown in the app, including screens already open |
 | **Theme** | System default, Light, Dark | System default | App color scheme and the system bars' icon colors, applied before the first frame |
 | **New-episode alerts** | On, Off | On | Off → no background checks' requests and no permission request on the first bookmark ([§3.7](#37-new-episode-alerts)); turning it on asks for the notification permission if Android blocks notifications |
-| **About** | — | — | Opens `https://github.com/zahichemaly/BakaMitai` |
+| **About** | — | — | Opens `https://github.com/zahichemaly/BakaMitai`. Debug builds only: release builds have no About section. |
 
 **Footer**: "BakaMitai v{versionName}" (the build's `versionName`) and the disclaimer "Unofficial app. Release data from subsplease.org." Plan: [6-settings.md](6-settings.md).
 

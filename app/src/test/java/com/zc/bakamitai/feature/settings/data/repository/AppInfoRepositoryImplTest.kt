@@ -8,9 +8,13 @@ import kotlin.test.assertEquals
 class AppInfoRepositoryImplTest {
 
     @Test
-    fun `the build's version and the project's repository`() {
+    fun `the build's version and build type, and the project's repository`() {
         assertEquals(
-            AppInfo(versionName = BuildConfig.VERSION_NAME, sourceCodeUrl = "https://github.com/zahichemaly/BakaMitai"),
+            AppInfo(
+                versionName = BuildConfig.VERSION_NAME,
+                sourceCodeUrl = "https://github.com/zahichemaly/BakaMitai",
+                isDebugBuild = BuildConfig.DEBUG,
+            ),
             AppInfoRepositoryImpl().getAppInfo(),
         )
     }

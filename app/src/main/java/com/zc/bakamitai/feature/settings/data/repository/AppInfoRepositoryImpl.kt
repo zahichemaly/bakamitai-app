@@ -5,12 +5,15 @@ import com.zc.bakamitai.feature.settings.domain.model.AppInfo
 import com.zc.bakamitai.feature.settings.domain.repository.AppInfoRepository
 import org.koin.core.annotation.Single
 
-/** The installed build's version name, and the project's repository (context.md §1). */
+/** The installed build's version name and build type, and the project's repository (context.md §1). */
 @Single
 class AppInfoRepositoryImpl : AppInfoRepository {
 
-    override fun getAppInfo(): AppInfo =
-        AppInfo(versionName = BuildConfig.VERSION_NAME, sourceCodeUrl = SOURCE_CODE_URL)
+    override fun getAppInfo(): AppInfo = AppInfo(
+        versionName = BuildConfig.VERSION_NAME,
+        sourceCodeUrl = SOURCE_CODE_URL,
+        isDebugBuild = BuildConfig.DEBUG,
+    )
 
     companion object {
         const val SOURCE_CODE_URL = "https://github.com/zahichemaly/BakaMitai"

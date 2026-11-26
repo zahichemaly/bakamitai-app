@@ -18,6 +18,7 @@ import com.zc.bakamitai.feature.settings.presentation.model.WeekStartOption
  * @property openPicker the picker whose dialog is open, or none. Kept here, not in the composition, so the dialog
  *   survives rotation.
  * @property versionLabel the footer's "BakaMitai v2.0.0".
+ * @property isAboutVisible the About section is shown: on debug builds only.
  */
 @Immutable
 data class SettingsState(
@@ -28,4 +29,5 @@ data class SettingsState(
     val alerts: AlertsPreferenceUIState? = null,
     val openPicker: SettingsPicker? = null,
     val versionLabel: UiText? = null,
+    val isAboutVisible: Boolean = false,
 )

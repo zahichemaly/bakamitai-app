@@ -74,7 +74,7 @@ Top to bottom, in a `Column(Modifier.verticalScroll(…))`:
 1. **GENERAL** (`primary`; "General Preferences" in the design, shortened 2026-11-19 per the user): the *First day of week* (`CalendarMonth`) and *Time format* (`Schedule`) picker rows.
 2. **APPEARANCE** (`secondary`): the *Theme* picker row (`Palette`).
 3. **NOTIFICATIONS** (`tertiary`): *New-episode alerts* (`Notifications`) (replaces "Data & Storage", [§3](#3-design-vs-spec) rows 6–10).
-4. **ABOUT** (`outline`): *About BakaMitai* (`Code`).
+4. **ABOUT** (`outline`): *About BakaMitai* (`Code`). **Debug builds only** (since 2026-11-26, per the user): `AppInfo.isDebugBuild` (`BuildConfig.DEBUG`, read in `data`) → `SettingsState.isAboutVisible`; release builds skip the whole section.
 
 The section headers are text only; each row starts with its icon ([§2.0](#20-token-mapping)).
 5. **Footer**: version and disclaimer.

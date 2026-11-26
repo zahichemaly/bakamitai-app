@@ -7,6 +7,7 @@ class FakeAppInfoRepository(
     private val info: AppInfo = AppInfo(
         versionName = "1.0",
         sourceCodeUrl = "https://github.com/zahichemaly/BakaMitai",
+        isDebugBuild = true,
     ),
 ) : AppInfoRepository {
     override fun getAppInfo(): AppInfo = info

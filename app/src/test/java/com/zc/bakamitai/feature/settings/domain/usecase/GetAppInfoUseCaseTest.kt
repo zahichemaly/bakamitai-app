@@ -9,7 +9,7 @@ class GetAppInfoUseCaseTest {
 
     @Test
     fun `returns the repository's app info`() {
-        val appInfo = AppInfo(versionName = "2.1", sourceCodeUrl = "https://example.org/source")
+        val appInfo = AppInfo(versionName = "2.1", sourceCodeUrl = "https://example.org/source", isDebugBuild = false)
 
         assertEquals(appInfo, GetAppInfoUseCase(FakeAppInfoRepository(appInfo))())
     }

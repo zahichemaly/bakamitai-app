@@ -62,10 +62,10 @@ import com.zc.bakamitai.feature.settings.presentation.model.TimeFormatOption
 import com.zc.bakamitai.feature.settings.presentation.model.WeekStartOption
 
 /**
- * Settings: the general preferences (first day of week, time format), the theme, the new-episode alerts switch and
- * the About link, then the version. One column, centered on wide windows. The pickers are rows showing their current
- * value; a tap opens its dialog ([SettingsState.openPicker]). While the settings load, each preference
- * card shows its own skeleton; the headers, the About row and the footer are real.
+ * Settings: the general preferences (first day of week, time format), the theme, the new-episode alerts switch and, on
+ * debug builds only, the About link, then the version. One column, centered on wide windows. The pickers are rows
+ * showing their current value; a tap opens its dialog ([SettingsState.openPicker]). While the settings load, each
+ * preference card shows its own skeleton; the headers, the About row and the footer are real.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -80,8 +80,7 @@ fun SettingsScreen(
         modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = { SettingsTopAppBar(onIntent = onIntent, scrollBehavior = scrollBehavior) },
         snackbarHost = { SnackbarHost(snackbarHostState) },
-        // Default content insets: with the navigation bar hidden they include the system navigation bar; on medium
-        // and wider windows, the rail's side is left out (the suite consumed it).
+        // Default content insets: the screen is pushed over the tab shell, so they include the system bars.
     ) { padding ->
         SettingsContent(
             state = state,
@@ -153,12 +152,14 @@ private fun SettingsContent(state: SettingsState, onIntent: (SettingsIntent) -> 
             GeneralSection(state = state, onIntent = onIntent)
             AppearanceSection(state = state, onIntent = onIntent)
             NotificationsSection(state = state, onIntent = onIntent)
-            SettingsSectionView(
-                title = UiText.StringResource(StringResource.settings_section_about),
-                accentColor = MaterialTheme.colorScheme.outline,
-                contentPadding = spacing.xs,
-            ) {
-                AboutRowView(onClick = onAboutClick)
+            if (state.isAboutVisible) {
+                SettingsSectionView(
+                    title = UiText.StringResource(StringResource.settings_section_about),
+                    accentColor = MaterialTheme.colorScheme.outline,
+                    contentPadding = spacing.xs,
+                ) {
+                    AboutRowView(onClick = onAboutClick)
+                }
             }
             state.versionLabel?.let { versionLabel -> SettingsFooterView(versionLabel = versionLabel) }
         }
@@ -305,10 +306,14 @@ private fun SettingsPickerDialog(state: SettingsState, onIntent: (SettingsIntent
     }
 }
 
-/** Loading; the defaults; Sunday, 24-hour, Dark and alerts off; alerts blocked by Android; the theme dialog open. */
+/**
+ * Loading; the defaults; Sunday, 24-hour, Dark and alerts off; alerts blocked by Android; the theme dialog open; a
+ * release build (no About section).
+ */
 private class SettingsStatePreviewProvider : PreviewParameterProvider<SettingsState> {
     private val loading = SettingsState(
         versionLabel = UiText.StringResource(StringResource.settings_footer_version, listOf("2.0.0")),
+        isAboutVisible = true,
     )
 
     override val values = sequenceOf(
@@ -320,6 +325,7 @@ private class SettingsStatePreviewProvider : PreviewParameterProvider<SettingsSt
         ),
         loaded(AppSettings(), ReleaseAlertsStatus.BLOCKED),
         loaded(AppSettings(), ReleaseAlertsStatus.ON).copy(openPicker = SettingsPicker.THEME),
+        loaded(AppSettings(), ReleaseAlertsStatus.ON).copy(isAboutVisible = false),
     )
 
     private fun loaded(settings: AppSettings, status: ReleaseAlertsStatus) = loading.copy(

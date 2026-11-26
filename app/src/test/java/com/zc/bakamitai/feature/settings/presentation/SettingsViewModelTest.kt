@@ -14,6 +14,7 @@ import com.zc.bakamitai.common.util.MainDispatcherRule
 import com.zc.bakamitai.feature.bookmarks.domain.model.ReleaseAlertsStatus
 import com.zc.bakamitai.feature.bookmarks.domain.repository.FakeReleaseAlertNotifier
 import com.zc.bakamitai.feature.bookmarks.domain.usecase.GetReleaseAlertsStatusUseCase
+import com.zc.bakamitai.feature.settings.domain.model.AppInfo
 import com.zc.bakamitai.feature.settings.domain.repository.FakeAppInfoRepository
 import com.zc.bakamitai.feature.settings.domain.usecase.GetAppInfoUseCase
 import com.zc.bakamitai.feature.settings.domain.usecase.UpdateNewEpisodeAlertsUseCase
@@ -51,9 +52,9 @@ class SettingsViewModelTest {
     private val versionLabel = UiText.StringResource(StringResource.settings_footer_version, listOf("1.0"))
     private val genericError = ErrorUIModel(UiText.StringResource(StringResource.error_generic), isRetryable = true)
 
-    private fun createViewModel() = SettingsViewModel(
+    private fun createViewModel(appInfo: FakeAppInfoRepository = FakeAppInfoRepository()) = SettingsViewModel(
         observeSettings = ObserveSettingsUseCase(settings),
-        getAppInfo = GetAppInfoUseCase(FakeAppInfoRepository()),
+        getAppInfo = GetAppInfoUseCase(appInfo),
         updateWeekStart = UpdateWeekStartUseCase(settings),
         updateTimeFormat = UpdateTimeFormatUseCase(settings),
         updateThemeMode = UpdateThemeModeUseCase(settings),
@@ -74,6 +75,7 @@ class SettingsViewModelTest {
         theme = appSettings.themeMode.toThemePicker(),
         alerts = appSettings.toAlertsPreferenceUIState(status),
         versionLabel = versionLabel,
+        isAboutVisible = true,
     )
 
     @Test
@@ -81,8 +83,25 @@ class SettingsViewModelTest {
         settings.settings.value = AppSettings(weekStart = WeekStart.SUNDAY, themeMode = ThemeMode.LIGHT)
 
         createViewModel().state.test {
-            assertEquals(SettingsState(versionLabel = versionLabel), awaitItem())
+            assertEquals(SettingsState(versionLabel = versionLabel, isAboutVisible = true), awaitItem())
             assertEquals(expectedContent(settings.settings.value, status = null), awaitItem())
+        }
+    }
+
+    @Test
+    fun `a release build hides the About section`() = runTest {
+        val releaseInfo = AppInfo(
+            versionName = "1.0",
+            sourceCodeUrl = "https://github.com/zahichemaly/BakaMitai",
+            isDebugBuild = false,
+        )
+
+        createViewModel(FakeAppInfoRepository(releaseInfo)).state.test {
+            assertEquals(SettingsState(versionLabel = versionLabel), awaitItem())
+            assertEquals(
+                expectedContent(settings.settings.value, status = null).copy(isAboutVisible = false),
+                awaitItem(),
+            )
         }
     }
 

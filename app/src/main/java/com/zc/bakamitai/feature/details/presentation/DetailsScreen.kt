@@ -108,8 +108,7 @@ fun DetailsScreen(
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
-        // Default content insets: with the navigation bar hidden they include the system navigation bar; on medium
-        // and wider windows, the rail's side is left out (the suite consumed it).
+        // Default content insets: the screen is pushed over the tab shell, so they include the system bars.
     ) { padding ->
         val contentModifier = Modifier
             .fillMaxSize()

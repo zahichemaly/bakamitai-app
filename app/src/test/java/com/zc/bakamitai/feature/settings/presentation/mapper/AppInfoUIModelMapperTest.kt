@@ -8,7 +8,11 @@ import kotlin.test.assertEquals
 
 class AppInfoUIModelMapperTest {
 
-    private val appInfo = AppInfo(versionName = "1.0", sourceCodeUrl = "https://github.com/zahichemaly/BakaMitai")
+    private val appInfo = AppInfo(
+        versionName = "1.0",
+        sourceCodeUrl = "https://github.com/zahichemaly/BakaMitai",
+        isDebugBuild = true,
+    )
 
     @Test
     fun `the version label is BakaMitai v plus the version name`() {
