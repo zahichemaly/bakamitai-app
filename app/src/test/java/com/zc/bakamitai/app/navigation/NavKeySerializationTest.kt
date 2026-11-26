@@ -7,7 +7,7 @@ import com.zc.bakamitai.feature.bookmarks.presentation.navigation.BookmarksNavKe
 import com.zc.bakamitai.feature.details.presentation.navigation.DetailsNavKey
 import com.zc.bakamitai.feature.home.presentation.navigation.HomeNavKey
 import com.zc.bakamitai.feature.schedule.presentation.navigation.ScheduleNavKey
-import com.zc.bakamitai.feature.settings.presentation.navigation.BackupNavKey
+import com.zc.bakamitai.feature.settings.backup.presentation.navigation.BackupNavKey
 import com.zc.bakamitai.feature.settings.presentation.navigation.SettingsNavKey
 import com.zc.bakamitai.feature.shows.presentation.navigation.AllShowsNavKey
 import kotlin.test.Test

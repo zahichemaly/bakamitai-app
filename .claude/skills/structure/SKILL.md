@@ -63,6 +63,7 @@ com.zc.bakamitai/
 │
 └── feature/
     └── [name]/                      # Lowercase feature package (e.g. novel, search, settings)
+        ├── [sub]/                   # A sub-feature used only by this feature (§1.2): data/, domain/, presentation/
         ├── data/
         │   ├── remote/              # Ktor [Name]Service classes and [Name]HtmlParser (Ksoup) for this feature
         │   ├── local/               # Feature-specific DataStore sources, or Room: [Name]Entity, [Name]Dao, [Name]Database
@@ -145,7 +146,30 @@ Rules:
 
 ---
 
-### 1.2 Repository root (build files)
+### 1.2 Sub-features
+
+A feature that **only one other feature uses** (opened only from it, and built from its components) is a **sub-feature** of that parent, not a top-level feature: `feature/[parent]/[sub]/`.
+
+```text
+feature/settings/
+├── data/ domain/ di/ presentation/    # Settings itself
+└── backup/                            # Backup and restore: a sub-feature of Settings
+    ├── data/                          # dto/, local/, mapper/, repository/, worker/
+    ├── domain/                        # model/, repository/, usecase/
+    └── presentation/                  # Backup* State/Intent/Effect/ViewModel/Route/Screen,
+                                       # model/, mapper/, component/restoredialog/, navigation/
+```
+
+Rules:
+
+- A sub-feature has the same `data/`, `domain/` and `presentation/` shape as a feature (create only the layers it needs). It has **no `di/`**: the parent's `@ComponentScan("com.zc.bakamitai.feature.[parent]")` already registers it.
+- A sub-feature **may import its parent**, layer for layer (`backup/presentation` uses Settings' `PickerPreferenceView`, `PickerDialogView`, `SettingsSectionView`, `PickerUIState`, `pickerOf`; `backup/domain` uses `AppInfoRepository`). The parent **never imports its sub-feature**: the parent only emits a navigation effect, and `app/navigation/AppEntryProvider.kt` wires the sub-feature's entry like any other.
+- Sub-features don't import each other. When a second feature needs a sub-feature, it stops being one: move it up to `feature/[name]/` (or its shared parts to `common/`).
+- Before adding a feature, check who uses it: one user → sub-feature of that user; two or more → top-level feature, with what they share in `common/`.
+
+---
+
+### 1.3 Repository root (build files)
 
 ```text
 BakaMitai/
@@ -336,7 +360,7 @@ grep -rlE "import com\.zc\.bakamitai\.app\." app/src/main/java/com/zc/bakamitai/
 
 ### Current repo state
 
-The template files have moved: `app/MainActivity.kt`, `app/AppApplication.kt` (registered in the manifest), and the theme in `common/ui/theme/`. `app/navigation/` exists (`AppNavigation`, `TopLevelDestination`, `AppEntryProvider`), and `app/AppRoute.kt` hosts it. Home (`feature/home/`), Schedule (`feature/schedule/`) and All Shows (`feature/shows/`) are built and enabled, and their cards and rows open **Details** (`feature/details/`), the first pushed screen: it goes on the app back stack over the tab shell (`MainNavKey`, `app/navigation/MainShell.kt`), so it covers the bottom bar or rail. **Bookmarks** (`feature/bookmarks/`) is built and enabled too, so all four tabs work: Room in `data/local/`, the release-check worker in `data/worker/`, the scheduler and notifier ports in `domain/repository/`, and the notification code in `presentation/notification/` (Bookmarks plan, [docs/5-bookmarks.md](../../../docs/5-bookmarks.md)). The Details plan's temporary exception (bookmarks without `presentation/`) is closed. **Settings** (`feature/settings/`, [docs/6-settings.md](../../../docs/6-settings.md)) is a pushed screen (app back stack) opened from the gear on every tab; the settings themselves live in `common/` (`AppSettings`, `SettingsRepository`, the `settings` Preferences DataStore), and the app root (`AppViewModel` / `AppState` / `AppRoute`) applies the theme before the first frame and provides `LocalUse24HourClock`. Settings holds a second screen, **Backup and restore** ([docs/7-backup.md](../../../docs/7-backup.md)): its `Backup*` State/Intent/Effect/ViewModel/Route/Screen sit beside Settings' in `feature/settings/presentation/` (it reuses Settings' components), its SAF source in `data/local/`, its DTOs in `data/dto/`, and `BackupWorker` / `BackupSchedulerImpl` in `data/worker/`. Details moved two more pieces to `common/`: the `release_date` parser (`common/data/mapper/ReleaseDateDTOMapper.kt`, from Home) and the centered-column helper (`common/ui/util/ContentWidth.kt`, from All Shows). All Shows added the first HTML parser (`feature/shows/data/remote/AllShowsHtmlParser.kt`, the only Ksoup import) and the shared `common/ui/component/emptystate/EmptyStateView.kt`. Schedule, as the second user, moved Home's shared pieces to `common/` ([docs/2-schedule.md §5.1](../../../docs/2-schedule.md#51-shared-code-moved-from-featurehome)): `Show`, `ShowSlug`, `ScheduledShow` and `GetTodayDateUseCase` in `common/domain/`, `ScheduleItemDTO`, `TodayScheduleDTO`, their mapper and image-URL mapping in `common/data/`, `TimeUIModelMapper` and `UtcOffsetUIModelMapper` in `common/ui/mapper/`, and `CoverImageView` and `TopLevelAppBarView` in `common/ui/component/`.
+The template files have moved: `app/MainActivity.kt`, `app/AppApplication.kt` (registered in the manifest), and the theme in `common/ui/theme/`. `app/navigation/` exists (`AppNavigation`, `TopLevelDestination`, `AppEntryProvider`), and `app/AppRoute.kt` hosts it. Home (`feature/home/`), Schedule (`feature/schedule/`) and All Shows (`feature/shows/`) are built and enabled, and their cards and rows open **Details** (`feature/details/`), the first pushed screen: it goes on the app back stack over the tab shell (`MainNavKey`, `app/navigation/MainShell.kt`), so it covers the bottom bar or rail. **Bookmarks** (`feature/bookmarks/`) is built and enabled too, so all four tabs work: Room in `data/local/`, the release-check worker in `data/worker/`, the scheduler and notifier ports in `domain/repository/`, and the notification code in `presentation/notification/` (Bookmarks plan, [docs/5-bookmarks.md](../../../docs/5-bookmarks.md)). The Details plan's temporary exception (bookmarks without `presentation/`) is closed. **Settings** (`feature/settings/`, [docs/6-settings.md](../../../docs/6-settings.md)) is a pushed screen (app back stack) opened from the gear on every tab; the settings themselves live in `common/` (`AppSettings`, `SettingsRepository`, the `settings` Preferences DataStore), and the app root (`AppViewModel` / `AppState` / `AppRoute`) applies the theme before the first frame and provides `LocalUse24HourClock`. **Backup and restore** ([docs/7-backup.md](../../../docs/7-backup.md)) is the first **sub-feature** (§1.2), `feature/settings/backup/`: only Settings opens it and it reuses Settings' components; its SAF source is in `backup/data/local/`, its DTOs in `backup/data/dto/`, and `BackupWorker` / `BackupSchedulerImpl` in `backup/data/worker/`. Details moved two more pieces to `common/`: the `release_date` parser (`common/data/mapper/ReleaseDateDTOMapper.kt`, from Home) and the centered-column helper (`common/ui/util/ContentWidth.kt`, from All Shows). All Shows added the first HTML parser (`feature/shows/data/remote/AllShowsHtmlParser.kt`, the only Ksoup import) and the shared `common/ui/component/emptystate/EmptyStateView.kt`. Schedule, as the second user, moved Home's shared pieces to `common/` ([docs/2-schedule.md §5.1](../../../docs/2-schedule.md#51-shared-code-moved-from-featurehome)): `Show`, `ShowSlug`, `ScheduledShow` and `GetTodayDateUseCase` in `common/domain/`, `ScheduleItemDTO`, `TodayScheduleDTO`, their mapper and image-URL mapping in `common/data/`, `TimeUIModelMapper` and `UtcOffsetUIModelMapper` in `common/ui/mapper/`, and `CoverImageView` and `TopLevelAppBarView` in `common/ui/component/`.
 
 ## 8. Checklist
 

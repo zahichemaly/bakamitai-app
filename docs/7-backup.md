@@ -68,11 +68,11 @@ JSON through the shared `appJson` (`ignoreUnknownKeys`), so later versions can a
 
 - Enums are stored by name, as in the DataStore; an unknown or missing name restores as the default.
 - Only what the user made is saved: a bookmark's slug, title, cover and date. The weekly slot and the alert tracking are re-derived by the next release check.
-- DTOs: `BackupDTO`, `BackupSettingsDTO`, `BackupBookmarkDTO` (`feature/settings/data/dto/`).
+- DTOs: `BackupDTO`, `BackupSettingsDTO`, `BackupBookmarkDTO` (`feature/settings/backup/data/dto/`).
 
 ### 4.2 Backup preferences
 
-In the shared `settings` Preferences DataStore (`BackupPreferencesLocalDataSource`, `feature/settings/data/local/`):
+In the shared `settings` Preferences DataStore (`BackupPreferencesLocalDataSource`, `feature/settings/backup/data/local/`):
 
 | Key | Type | Default |
 |---|---|---|
@@ -93,7 +93,7 @@ Android Auto Backup may bring these keys to a new device without the folder perm
 
 ### 4.4 Errors
 
-`BackupError` (`feature/settings/domain/model/`), mapped to text by `BackupErrorUIModelMapper`:
+`BackupError` (`feature/settings/backup/domain/model/`), mapped to text by `BackupErrorUIModelMapper`:
 
 | Error | When | Snackbar |
 |---|---|---|
@@ -105,7 +105,7 @@ Android Auto Backup may bring these keys to a new device without the folder perm
 
 ## 5. Architecture
 
-All in `feature/settings/` (the screen reuses Settings' components, which `structure` keeps inside one feature).
+All in `feature/settings/backup/`, a **sub-feature** of Settings (`structure` §1.2): only Settings opens it, and its screen reuses Settings' components. It has no `di/` (Settings' module scan registers it), and Settings never imports it.
 
 | Layer | Files |
 |---|---|
