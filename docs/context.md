@@ -38,6 +38,7 @@ App identity: name `BakaMitai`, package `com.zc.bakamitai`, minSdk 27. Source co
   4. **Bookmarks**
 - Tapping any anime anywhere (Home, Schedule, All Shows, Bookmarks) opens the **Details** screen for that show.
 - Per the `tech-stack` skill, top-level navigation uses `NavigationSuiteScaffold` (bottom bar on phones, rail or drawer on larger windows) and Navigation 3 `NavKey`s.
+- The bottom navigation belongs to the tabs only. Every other screen (Details, Settings) is pushed over the tabs and covers them, bottom bar or rail included; the bar is never hidden or shown per screen.
 
 ---
 
@@ -92,7 +93,7 @@ Two sections, both about **today** (in the device's time zone):
 
 ### 3.5 Details
 
-Opens when the user taps any anime on Home, Schedule or All Shows (and Bookmarks once it exists). It's a pushed screen with a back arrow, the show's title in the top bar (once loaded) and no bottom bar on phones. The page has the same plain background as the other screens. The input is only the show's **slug** (the `page` value from the API, for example `sora-wa-akai-kawa-no-hotori`), because navigation keys carry ids only (`conventions` skill); the header shows a skeleton until the show page is parsed. Plan: [4-details.md](4-details.md).
+Opens when the user taps any anime on Home, Schedule or All Shows (and Bookmarks once it exists). It's a pushed screen with a back arrow, the show's title in the top bar (once loaded), and it covers the tabs (no bottom bar or rail). The page has the same plain background as the other screens. The input is only the show's **slug** (the `page` value from the API, for example `sora-wa-akai-kawa-no-hotori`), because navigation keys carry ids only (`conventions` skill); the header shows a skeleton until the show page is parsed. Plan: [4-details.md](4-details.md).
 
 Content:
 
@@ -119,7 +120,7 @@ Data: [§4.4](#44-details).
 
 ### 3.6 Settings
 
-A pushed screen (back arrow, no bottom bar on phones), opened from the **gear** in the top bar of every tab. A list of preferences, saved locally; each change applies at once, with no toast (a snackbar only if saving fails). **Picker settings** (*First day of week*, *Time format*, *Theme*) are rows that show their current value; tapping one opens a dialog with the options (choosing one saves it and closes the dialog). *New-episode alerts* is a switch:
+A pushed screen (back arrow; it covers the tabs, bottom bar or rail included), opened from the **gear** in the top bar of every tab. A list of preferences, saved locally; each change applies at once, with no toast (a snackbar only if saving fails). **Picker settings** (*First day of week*, *Time format*, *Theme*) are rows that show their current value; tapping one opens a dialog with the options (choosing one saves it and closes the dialog). *New-episode alerts* is a switch:
 
 | Preference | Options | Default | Effect |
 |---|---|---|---|

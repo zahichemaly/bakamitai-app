@@ -3,6 +3,7 @@ package com.zc.bakamitai.common.ui.navigation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSerializable
@@ -10,6 +11,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavEntry
+import androidx.navigation3.runtime.NavEntryDecorator
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.rememberDecoratedNavEntries
 import androidx.navigation3.runtime.rememberNavBackStack
@@ -20,70 +22,86 @@ import androidx.savedstate.compose.serialization.serializers.MutableStateSeriali
 /**
  * Creates the app's [NavigationState], kept across configuration changes and process death.
  *
- * @param startRoute the top-level route the app opens on and exits through; must be in [topLevelRoutes].
- * @param topLevelRoutes one key per top-level destination (tab); each gets its own back stack.
+ * @param rootRoute the key at the bottom of the app back stack: the tab shell.
+ * @param startTab the tab the app opens on and exits through; must be in [tabs].
+ * @param tabs one key per tab (top-level destination).
  */
 @Composable
-fun rememberNavigationState(startRoute: NavKey, topLevelRoutes: Set<NavKey>): NavigationState {
-    val topLevelRoute = rememberSerializable(
-        startRoute,
-        topLevelRoutes,
+fun rememberNavigationState(rootRoute: NavKey, startTab: NavKey, tabs: Set<NavKey>): NavigationState {
+    val backStack = rememberNavBackStack(rootRoute)
+    val selectedTab = rememberSerializable(
+        startTab,
+        tabs,
         serializer = MutableStateSerializer(NavKeySerializer()),
     ) {
-        mutableStateOf(startRoute)
+        mutableStateOf(startTab)
     }
-    val backStacks = topLevelRoutes.associateWith { key -> rememberNavBackStack(key) }
 
-    return remember(startRoute, topLevelRoutes) {
-        NavigationState(
-            startRoute = startRoute,
-            topLevelRoute = topLevelRoute,
-            backStacks = backStacks,
-        )
+    return remember(backStack, selectedTab, startTab, tabs) {
+        NavigationState(startTab = startTab, tabs = tabs, selectedTab = selectedTab, backStack = backStack)
     }
 }
 
 /**
- * Multiple back stacks, one per top-level destination, following the "exit through home" pattern: the
- * [startRoute] stack is always shown first, plus at most the selected [topLevelRoute] stack. Only [Navigator]
- * changes it.
+ * The app's navigation, on two levels kept apart:
+ * - the **app back stack** ([backStack]): the tab shell at the bottom, and every pushed screen above it, covering
+ * the shell (its navigation bar or rail included);
+ * - the **tabs**, shown inside the shell: [selectedTab], one of [tabs]. They are only selected, never pushed onto,
+ * and follow the "exit through the start tab" pattern.
  *
- * @param startRoute the top-level route the user exits the app through.
- * @param topLevelRoute the state backing the selected top-level route.
- * @param backStacks the back stack of each top-level route. A tab keeps its stack while another is selected.
+ * Only [Navigator] changes it.
+ *
+ * @param startTab the tab the user exits the app through.
+ * @param tabs one key per tab.
+ * @param selectedTab the state backing the selected tab.
+ * @param backStack the app back stack, the tab shell's key at the bottom.
  */
 class NavigationState(
-    val startRoute: NavKey,
-    topLevelRoute: MutableState<NavKey>,
-    val backStacks: Map<NavKey, NavBackStack<NavKey>>,
+    val startTab: NavKey,
+    val tabs: Set<NavKey>,
+    selectedTab: MutableState<NavKey>,
+    val backStack: NavBackStack<NavKey>,
 ) {
 
-    /** The selected top-level route. */
-    var topLevelRoute: NavKey by topLevelRoute
+    /** The selected tab. */
+    var selectedTab: NavKey by selectedTab
 
-    /** Keys currently displayed, bottom to top: the start stack, then the selected stack if it differs. */
-    val visibleKeys: List<NavKey>
-        get() = topLevelRoutesInUse().flatMap { backStacks[it].orEmpty() }
+    /** The tabs the shell shows, bottom to top: the start tab, then the selected tab if it differs. */
+    val visibleTabs: List<NavKey>
+        get() = if (selectedTab == startTab) listOf(startTab) else listOf(startTab, selectedTab)
+
+    /** The app back stack's entries for the app-level `NavDisplay`, each with its own saved state and ViewModels. */
+    @Composable
+    fun rememberDecoratedEntries(entryProvider: (NavKey) -> NavEntry<NavKey>): List<NavEntry<NavKey>> =
+        rememberDecoratedNavEntries(
+            backStack = backStack,
+            entryDecorators = rememberEntryDecorators(),
+            entryProvider = entryProvider,
+        )
 
     /**
-     * The visible entries for `NavDisplay`. Each back stack has its own saved-state and ViewModel-store
-     * decorators, so every entry keeps its UI state and ViewModel while its tab is in the background.
+     * Every tab's entry, by tab key. Each tab has its own decorators and is never popped, so it keeps its saved
+     * state and ViewModels for the app's lifetime, whichever tab or pushed screen is shown.
+     *
+     * Call it above the app-level `NavDisplay`: decorators created inside the tab shell would be cleared whenever a
+     * pushed screen covers it (the shell then leaves the composition).
      */
     @Composable
-    fun toDecoratedEntries(entryProvider: (NavKey) -> NavEntry<NavKey>): List<NavEntry<NavKey>> {
-        val decoratedEntries = backStacks.mapValues { (_, stack) ->
-            rememberDecoratedNavEntries(
-                backStack = stack,
-                entryDecorators = listOf(
-                    rememberSaveableStateHolderNavEntryDecorator(),
-                    rememberViewModelStoreNavEntryDecorator(),
-                ),
-                entryProvider = entryProvider,
-            )
+    fun rememberDecoratedTabEntries(entryProvider: (NavKey) -> NavEntry<NavKey>): Map<NavKey, NavEntry<NavKey>> =
+        tabs.associateWith { tab ->
+            key(tab) {
+                rememberDecoratedNavEntries(
+                    backStack = listOf(tab),
+                    entryDecorators = rememberEntryDecorators(),
+                    entryProvider = entryProvider,
+                ).single()
+            }
         }
-        return topLevelRoutesInUse().flatMap { decoratedEntries[it].orEmpty() }
-    }
-
-    private fun topLevelRoutesInUse(): List<NavKey> =
-        if (topLevelRoute == startRoute) listOf(startRoute) else listOf(startRoute, topLevelRoute)
 }
+
+/** Saved state and a ViewModel store per entry, both cleared when the entry is popped. */
+@Composable
+private fun rememberEntryDecorators(): List<NavEntryDecorator<NavKey>> = listOf(
+    rememberSaveableStateHolderNavEntryDecorator(),
+    rememberViewModelStoreNavEntryDecorator(),
+)

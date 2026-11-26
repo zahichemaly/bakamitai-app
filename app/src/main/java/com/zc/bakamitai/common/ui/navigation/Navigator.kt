@@ -9,49 +9,45 @@ import androidx.navigation3.runtime.NavKey
 class Navigator(val state: NavigationState) {
 
     /**
-     * For a top-level route: selects its tab, or, when that tab is already selected, pops its stack back to the
-     * root (reselecting a tab, e.g. from the rail while Details is open). For any other key: pushes it onto the
-     * selected tab's stack, unless it's already on top (a double tap opens one screen).
+     * For a tab: closes every pushed screen and selects the tab. For any other key: pushes it on the app back stack,
+     * over the tab shell, unless it's already on top (a double tap opens one screen).
      */
     fun navigate(key: NavKey) {
-        if (key in state.backStacks.keys) {
-            if (key == state.topLevelRoute) {
-                val stack = state.backStacks.getValue(key)
-                while (stack.size > 1) stack.removeAt(stack.lastIndex)
-            } else {
-                state.topLevelRoute = key
-            }
-        } else {
-            val stack = state.backStacks.getValue(state.topLevelRoute)
-            if (stack.lastOrNull() != key) stack.add(key)
+        if (key in state.tabs) {
+            popToTabShell()
+            state.selectedTab = key
+        } else if (state.backStack.lastOrNull() != key) {
+            state.backStack.add(key)
         }
     }
 
     /**
-     * Opens [key] over the start route (a notification tap): selects the start tab, pops its stack to the root and
-     * pushes [key]. Other tabs keep their stacks. A top-level [key] is only selected.
+     * Opens [key] over the start tab (a notification tap): closes every pushed screen, selects the start tab and
+     * pushes [key]. A tab [key] is only selected, as with [navigate].
      */
     fun navigateFromStart(key: NavKey) {
-        if (key in state.backStacks.keys) {
-            state.topLevelRoute = key
+        if (key in state.tabs) {
+            navigate(key)
             return
         }
-        state.topLevelRoute = state.startRoute
-        val stack = state.backStacks.getValue(state.startRoute)
-        while (stack.size > 1) stack.removeAt(stack.lastIndex)
-        stack.add(key)
+        popToTabShell()
+        state.selectedTab = state.startTab
+        state.backStack.add(key)
     }
 
     /**
-     * Pops the selected tab's stack. At the root of a tab other than the start route, returns to the start
-     * route instead ("exit through home"). At the root of the start route, does nothing: `NavDisplay` leaves the
-     * app.
+     * Pops the app back stack. With only the tab shell left, a tab other than the start tab returns to the start tab
+     * ("exit through the start tab"). On the start tab, does nothing: no `NavDisplay` handles Back there, so the
+     * system leaves the app.
      */
     fun goBack() {
-        val stack = state.backStacks.getValue(state.topLevelRoute)
         when {
-            stack.size > 1 -> stack.removeAt(stack.lastIndex)
-            state.topLevelRoute != state.startRoute -> state.topLevelRoute = state.startRoute
+            state.backStack.size > 1 -> state.backStack.removeAt(state.backStack.lastIndex)
+            state.selectedTab != state.startTab -> state.selectedTab = state.startTab
         }
+    }
+
+    private fun popToTabShell() {
+        while (state.backStack.size > 1) state.backStack.removeAt(state.backStack.lastIndex)
     }
 }

@@ -187,34 +187,32 @@ runCatching { service.fetch() }                                  // ❌ swallows
 
 ### Material 3 Adaptive
 
-- Top-level destinations use **`NavigationSuiteScaffold`** (bottom bar on compact, rail on medium, drawer on expanded — chosen automatically).
+- Top-level destinations use **`NavigationSuiteScaffold`** (bottom bar on compact, rail on medium, drawer on expanded — chosen automatically). It wraps **only the tabs** (`app/navigation/MainShell.kt`); every other screen is pushed on the app back stack above the shell and covers it, bar or rail included. The bar is never hidden or shown per screen.
 - List/detail flows use the **`ListDetailPaneScaffold`** — with Navigation 3, through the list-detail scene strategy (`rememberListDetailSceneStrategy()` + `ListDetailSceneStrategy.listPane()` / `detailPane()` metadata on entries). Use `SupportingPaneScaffold` for main + supporting content.
 - Layout decisions read **`currentWindowAdaptiveInfo().windowSizeClass`** in a Route/Screen-level composable and pass plain values (`columns: Int`, `isExpanded: Boolean`) down. Window size is UI-only — it never goes into a ViewModel or `State`.
 
 ```kotlin
-// ✅ app/navigation/AppNavigation.kt (entry point)
+// ✅ app/navigation/AppNavigation.kt: two levels; the tab shell is the bottom entry of the app back stack
 @Composable
 fun AppNavigation() {
-    val backStack = rememberNavBackStack(NovelListNavKey)
-    val current = backStack.lastOrNull()
+    val navigationState = rememberNavigationState(rootRoute = MainNavKey, startTab = HomeNavKey, tabs = tabs)
+    val navigator = remember(navigationState) { Navigator(navigationState) }
+    // Above the app-level NavDisplay, so each tab keeps its state and ViewModel while a pushed screen covers it.
+    val tabEntries by rememberUpdatedState(navigationState.rememberDecoratedTabEntries(tabEntryProvider(navigator)))
 
-    NavigationSuiteScaffold(
-        navigationSuiteItems = {
-            TopLevelDestination.entries.forEach { destination ->
-                item(
-                    selected = current == destination.key,
-                    onClick = {
-                        backStack.clear()
-                        backStack.add(destination.key)
-                    },
-                    icon = { Icon(destination.icon, contentDescription = null) },
-                    label = { Text(destination.label.asString()) },   // label: UiText
+    NavDisplay(
+        entries = navigationState.rememberDecoratedEntries(
+            appEntryProvider(navigator) {
+                MainShell(                       // NavigationSuiteScaffold around NavDisplay(tab entries)
+                    selectedTab = navigationState.selectedTab,
+                    tabEntries = navigationState.visibleTabs.map { tab -> tabEntries.getValue(tab) },
+                    onTabClick = navigator::navigate,
+                    onBack = navigator::goBack,
                 )
-            }
-        },
-    ) {
-        AppNavDisplay(backStack)
-    }
+            },
+        ),
+        onBack = navigator::goBack,              // Details, Settings… cover the whole shell, bar included
+    )
 }
 ```
 
@@ -293,6 +291,7 @@ For deep detail (scenes, multiple back stacks, results, deep links) load the `na
 - **Destinations are `@Serializable` `NavKey`s**, one per screen, named `[Name]NavKey` (the `[Name]Route` name is reserved for the composable — see `conventions`). Each is declared in its owning feature's `presentation/navigation/[Name]NavKey.kt` and carries only primitive/serializable arguments (ids, not objects).
 - A feature registers its entries in an `EntryProviderScope<NavKey>.[name]Entry(...)` extension (`presentation/navigation/[Name]Navigation.kt`). The **back stack**, `Navigator` and **`NavDisplay`** live only in `app/navigation/` and `common/ui/navigation/`; features never see the back stack or a `Navigator`.
 - `NavDisplay` installs `rememberSaveableStateHolderNavEntryDecorator()` and `rememberViewModelStoreNavEntryDecorator()` so each entry gets its own saved state and ViewModel store.
+- **Two levels**: the app back stack (`MainNavKey`, the tab shell, then pushed screens) and the tabs inside the shell (`architecture` §Navigation). `Navigator.navigate` selects a tab key (closing pushed screens) and pushes any other key on the app back stack. Back pops the app back stack, then returns to the start tab, then leaves the app.
 - Arguments flow **key → Route → ViewModel**: the entry block in the feature's `[name]Entry` (`entry<NovelDetailNavKey> { key -> … }`) passes `key.id` to `NovelDetailRoute(novelId = key.id, …)`, which passes it to Koin with `koinViewModel { parametersOf(novelId) }`.
 - Navigation is triggered **only** by the Route, in response to an `[Name]Effect` (or a direct callback for trivial clicks), through lambdas like `onNavigateBack: () -> Unit`, `onOpenNovel: (String) -> Unit`. Screens never navigate; they emit intents.
 - Cross-feature navigation: `[name]Entry` takes lambdas (or a `[Name]NavActions` past ~4), and `app/navigation/AppEntryProvider.kt` builds them from `Navigator` and the other features' `NavKey`s. Features never import each other's navigation package.
@@ -338,7 +337,8 @@ private fun AppNavDisplay(backStack: NavBackStack<NavKey>) {
 | ❌ Don't | ✅ Do |
 |---|---|
 | `navController.navigate("novel/$id")` | `backStack.add(NovelDetailNavKey(id))` in `app/navigation/` |
-| `NavKey` declared in `app/navigation/` | Declared in the owning feature's `presentation/navigation/` |
+| `NavKey` declared in `app/navigation/` | Declared in the owning feature's `presentation/navigation/` (only the shell's `MainNavKey` lives in `app/navigation/`) |
+| A marker key or `suiteState.hide()` to hide the bottom bar on a screen | Register the screen in `appEntryProvider`: it's pushed over the tab shell and covers the bar |
 | A feature importing another feature's `NavKey` or taking a `Navigator` | A lambda parameter on its `[name]Entry`, wired in `AppEntryProvider.kt` |
 | `savedStateHandle.get<String>("id")` / `arguments?.getString("id")` | `entry<NovelDetailNavKey> { key -> NovelDetailRoute(novelId = key.id) }` |
 | `NovelDetailScreen(navController = …)` | `NovelDetailScreen(state, onIntent)`; Route maps `Effect.NavigateBack` → `onNavigateBack()` |

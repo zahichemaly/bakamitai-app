@@ -1,11 +1,8 @@
 package com.zc.bakamitai.feature.settings.presentation.navigation
 
 import androidx.navigation3.runtime.NavKey
-import com.zc.bakamitai.common.ui.navigation.FullScreenNavKey
 import kotlinx.serialization.Serializable
 
-/** Settings, pushed onto the current tab; it hides the bottom navigation bar. */
+/** Settings, pushed on the app back stack: it covers the tabs, bottom bar or rail included. */
 @Serializable
-data object SettingsNavKey :
-    NavKey,
-    FullScreenNavKey
+data object SettingsNavKey : NavKey

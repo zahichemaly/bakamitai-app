@@ -546,7 +546,7 @@ class NovelDetailViewModel(...) : ViewModel() {
 - Receives the `NavKey`'s arguments as plain parameters (`novelId: String`) from the feature's entry function (`presentation/navigation/[Name]Navigation.kt`).
 - Obtains the ViewModel with `koinViewModel { parametersOf(...) }`, collects `state` with `collectAsStateWithLifecycle()`, collects `effect` with `ObserveAsEvents` (`common/ui/util/`, a lifecycle-aware `LaunchedEffect`), and delegates rendering to `[Name]Screen(state, viewModel::onIntent)`.
 - Receives navigation callbacks as lambdas (`onNavigateBack: () -> Unit`), or one `[Name]NavActions` when there are more than ~4 — never the back stack or a `Navigator`.
-- A `NavKey` carries ids only (never display data), is `@Serializable`, and implements `FullScreenNavKey` (hides the navigation bar) or `OverlayNavKey` (bottom sheet) when it is not a plain page or tab. Add every new key to `NavKeySerializationTest`.
+- A `NavKey` carries ids only (never display data), is `@Serializable`, and implements `OverlayNavKey` (bottom sheet) when it is one. It never says whether the navigation bar shows: a tab's key is a `TopLevelDestination`, and any other key is pushed over the tab shell, covering the bar (`architecture` §Navigation). Add every new key to `NavKeySerializationTest`.
 
 ```kotlin
 // ✅ presentation/NovelDetailRoute.kt
@@ -707,7 +707,7 @@ File locations follow the `structure` skill. When adding a screen `[Name]`, work
 2. `data`: the DTOs (one per file), `[Thing]DTOMapper`, `[Feature]Service` and `[Thing]RepositoryImpl`.
 3. `presentation`: `[Thing]UIModel` / `[Thing]UIState`, `[Thing]UIModelMapper`, then `[Name]State`, `[Name]Intent`, `[Name]Effect`, `[Name]ViewModel`, `[Name]Screen` (with a preview) and `[Name]Route`.
 4. `di`: register everything in the feature's `[Name]Module.kt`, and make sure `app/di/AppModule.kt` includes that module.
-5. `presentation/navigation/`: add `[Name]NavKey.kt` and `[Name]Navigation.kt` with `[name]Entry(...)`, add `Navigator.navigateTo[Name](...)` there too, then call `[name]Entry(...)` from `app/navigation/AppEntryProvider.kt` with lambdas that use the other features' `navigateTo…` helpers. Add the key to `NavKeySerializationTest`.
+5. `presentation/navigation/`: add `[Name]NavKey.kt` and `[Name]Navigation.kt` with `[name]Entry(...)`, add `Navigator.navigateTo[Name](...)` there too, then call `[name]Entry(...)` from `app/navigation/AppEntryProvider.kt` (`appEntryProvider` for a pushed screen; `tabEntryProvider` plus a `TopLevelDestination` for a new tab) with lambdas that use the other features' `navigateTo…` helpers. Add the key to `NavKeySerializationTest`.
 
 ## 7. Conventions checklist (run before finishing any change)
 

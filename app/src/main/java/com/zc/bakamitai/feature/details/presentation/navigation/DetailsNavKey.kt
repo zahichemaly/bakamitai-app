@@ -1,11 +1,8 @@
 package com.zc.bakamitai.feature.details.presentation.navigation
 
 import androidx.navigation3.runtime.NavKey
-import com.zc.bakamitai.common.ui.navigation.FullScreenNavKey
 import kotlinx.serialization.Serializable
 
-/** One show's Details, pushed onto the current tab; it hides the bottom navigation bar. */
+/** One show's Details, pushed on the app back stack: it covers the tabs, bottom bar or rail included. */
 @Serializable
-data class DetailsNavKey(val slug: String) :
-    NavKey,
-    FullScreenNavKey
+data class DetailsNavKey(val slug: String) : NavKey

@@ -8,52 +8,50 @@ import kotlin.test.assertEquals
 
 class NavigatorTest {
 
+    private data object Shell : NavKey
+
     private data object Home : NavKey
 
     private data object Schedule : NavKey
 
+    private data object Settings : NavKey
+
     private data class Details(val slug: String) : NavKey
 
     private val state = NavigationState(
-        startRoute = Home,
-        topLevelRoute = mutableStateOf(Home),
-        backStacks = mapOf<NavKey, NavBackStack<NavKey>>(
-            Home to NavBackStack(Home),
-            Schedule to NavBackStack(Schedule),
-        ),
+        startTab = Home,
+        tabs = setOf(Home, Schedule),
+        selectedTab = mutableStateOf(Home),
+        backStack = NavBackStack(Shell),
     )
     private val navigator = Navigator(state)
 
+    private val backStack: List<NavKey>
+        get() = state.backStack.toList()
+
     @Test
-    fun `starts on the start route only`() {
-        assertEquals(listOf<NavKey>(Home), state.visibleKeys)
+    fun `starts on the tab shell with the start tab`() {
+        assertEquals(listOf<NavKey>(Shell), backStack)
+        assertEquals(Home, state.selectedTab)
+        assertEquals(listOf<NavKey>(Home), state.visibleTabs)
     }
 
     @Test
-    fun `navigating to a top-level route selects its tab above the start stack`() {
+    fun `selecting a tab shows it above the start tab and pushes nothing`() {
         navigator.navigate(Schedule)
 
-        assertEquals(Schedule, state.topLevelRoute)
-        assertEquals(listOf(Home, Schedule), state.visibleKeys)
+        assertEquals(Schedule, state.selectedTab)
+        assertEquals(listOf(Home, Schedule), state.visibleTabs)
+        assertEquals(listOf<NavKey>(Shell), backStack)
     }
 
     @Test
-    fun `navigating to another key pushes it onto the selected tab`() {
+    fun `another key is pushed on the app back stack and the tab is kept`() {
         navigator.navigate(Schedule)
         navigator.navigate(Details("frieren"))
 
-        assertEquals(listOf(Schedule, Details("frieren")), state.backStacks.getValue(Schedule).toList())
-        assertEquals(listOf<NavKey>(Home), state.backStacks.getValue(Home).toList())
-    }
-
-    @Test
-    fun `a tab keeps its stack while another tab is selected`() {
-        navigator.navigate(Schedule)
-        navigator.navigate(Details("frieren"))
-        navigator.navigate(Home)
-        navigator.navigate(Schedule)
-
-        assertEquals(listOf(Home, Schedule, Details("frieren")), state.visibleKeys)
+        assertEquals(listOf(Shell, Details("frieren")), backStack)
+        assertEquals(Schedule, state.selectedTab)
     }
 
     @Test
@@ -61,104 +59,103 @@ class NavigatorTest {
         navigator.navigate(Details("frieren"))
         navigator.navigate(Details("frieren"))
 
-        assertEquals(listOf(Home, Details("frieren")), state.visibleKeys)
+        assertEquals(listOf(Shell, Details("frieren")), backStack)
         navigator.goBack()
-        assertEquals(listOf<NavKey>(Home), state.visibleKeys)
+        assertEquals(listOf<NavKey>(Shell), backStack)
     }
 
     @Test
     fun `pushing a different key on top of another still pushes`() {
         navigator.navigate(Details("frieren"))
+        navigator.navigate(Settings)
         navigator.navigate(Details("one-piece"))
 
-        assertEquals(listOf(Home, Details("frieren"), Details("one-piece")), state.visibleKeys)
+        assertEquals(listOf(Shell, Details("frieren"), Settings, Details("one-piece")), backStack)
     }
 
     @Test
-    fun `reselecting the selected tab pops its stack to the root`() {
-        navigator.navigate(Schedule)
+    fun `selecting a tab closes every pushed screen`() {
         navigator.navigate(Details("frieren"))
-        navigator.navigate(Details("one-piece"))
+        navigator.navigate(Settings)
 
         navigator.navigate(Schedule)
 
-        assertEquals(Schedule, state.topLevelRoute)
-        assertEquals(listOf<NavKey>(Schedule), state.backStacks.getValue(Schedule).toList())
-        assertEquals(listOf(Home, Schedule), state.visibleKeys)
+        assertEquals(listOf<NavKey>(Shell), backStack)
+        assertEquals(Schedule, state.selectedTab)
     }
 
     @Test
-    fun `reselecting the start tab pops its stack to the root`() {
-        navigator.navigate(Details("frieren"))
-
-        navigator.navigate(Home)
-
-        assertEquals(listOf<NavKey>(Home), state.visibleKeys)
-    }
-
-    @Test
-    fun `selecting another tab keeps both stacks`() {
-        navigator.navigate(Details("frieren"))
+    fun `selecting the selected tab keeps it`() {
         navigator.navigate(Schedule)
-        navigator.navigate(Details("one-piece"))
+        navigator.navigate(Schedule)
 
-        navigator.navigate(Home)
-
-        assertEquals(listOf(Home, Details("frieren")), state.backStacks.getValue(Home).toList())
-        assertEquals(listOf(Schedule, Details("one-piece")), state.backStacks.getValue(Schedule).toList())
+        assertEquals(Schedule, state.selectedTab)
+        assertEquals(listOf(Home, Schedule), state.visibleTabs)
+        assertEquals(listOf<NavKey>(Shell), backStack)
     }
 
     @Test
-    fun `navigating from start selects the start tab, pops it to the root and pushes the key`() {
-        navigator.navigate(Details("one-piece"))
+    fun `navigating from start closes pushed screens, selects the start tab and pushes the key`() {
         navigator.navigate(Schedule)
         navigator.navigate(Details("dandadan"))
+        navigator.navigate(Settings)
 
         navigator.navigateFromStart(Details("frieren"))
 
-        assertEquals(Home, state.topLevelRoute)
-        assertEquals(listOf(Home, Details("frieren")), state.visibleKeys)
-        assertEquals(listOf(Schedule, Details("dandadan")), state.backStacks.getValue(Schedule).toList())
+        assertEquals(Home, state.selectedTab)
+        assertEquals(listOf(Shell, Details("frieren")), backStack)
     }
 
     @Test
-    fun `navigating from start then back returns to the start root`() {
+    fun `navigating from start then back returns to the start tab`() {
+        navigator.navigate(Schedule)
         navigator.navigateFromStart(Details("frieren"))
+
         navigator.goBack()
 
-        assertEquals(listOf<NavKey>(Home), state.visibleKeys)
+        assertEquals(listOf<NavKey>(Shell), backStack)
+        assertEquals(listOf<NavKey>(Home), state.visibleTabs)
     }
 
     @Test
-    fun `navigating from start to a top-level key only selects it`() {
+    fun `navigating from start to a tab only selects it`() {
+        navigator.navigate(Details("frieren"))
+
         navigator.navigateFromStart(Schedule)
 
-        assertEquals(Schedule, state.topLevelRoute)
-        assertEquals(listOf(Home, Schedule), state.visibleKeys)
+        assertEquals(Schedule, state.selectedTab)
+        assertEquals(listOf<NavKey>(Shell), backStack)
     }
 
     @Test
-    fun `back pops the selected tab`() {
-        navigator.navigate(Details("frieren"))
-        navigator.goBack()
-
-        assertEquals(listOf<NavKey>(Home), state.visibleKeys)
-    }
-
-    @Test
-    fun `back at the root of another tab returns to the start route`() {
+    fun `back pops the app back stack first and keeps the tab`() {
         navigator.navigate(Schedule)
-        navigator.goBack()
+        navigator.navigate(Details("frieren"))
+        navigator.navigate(Settings)
 
-        assertEquals(Home, state.topLevelRoute)
-        assertEquals(listOf<NavKey>(Home), state.visibleKeys)
+        navigator.goBack()
+        assertEquals(listOf(Shell, Details("frieren")), backStack)
+
+        navigator.goBack()
+        assertEquals(listOf<NavKey>(Shell), backStack)
+        assertEquals(Schedule, state.selectedTab)
     }
 
     @Test
-    fun `back at the root of the start route does nothing`() {
+    fun `back on the tab shell from another tab returns to the start tab`() {
+        navigator.navigate(Schedule)
+
         navigator.goBack()
 
-        assertEquals(Home, state.topLevelRoute)
-        assertEquals(listOf<NavKey>(Home), state.visibleKeys)
+        assertEquals(Home, state.selectedTab)
+        assertEquals(listOf<NavKey>(Home), state.visibleTabs)
+    }
+
+    @Test
+    fun `back on the tab shell from the start tab does nothing`() {
+        navigator.goBack()
+
+        assertEquals(Home, state.selectedTab)
+        assertEquals(listOf<NavKey>(Shell), backStack)
     }
 }

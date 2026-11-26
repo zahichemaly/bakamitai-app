@@ -18,6 +18,7 @@ class NavKeySerializationTest {
 
     /** One sample of every key in the app. Add each new key here. */
     private val keys: List<NavKey> = listOf(
+        MainNavKey,
         HomeNavKey,
         ScheduleNavKey,
         AllShowsNavKey,
