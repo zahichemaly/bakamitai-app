@@ -6,6 +6,9 @@ sealed interface SettingsEffect {
 
     data object NavigateBack : SettingsEffect
 
+    /** Backup and restore, pushed over Settings. */
+    data object OpenBackup : SettingsEffect
+
     /** The source code page, in the browser. Without an app for it: "No app can open this link." */
     data class OpenUrl(val url: String) : SettingsEffect
 

@@ -101,6 +101,8 @@ class SettingsViewModel(
             SettingsIntent.AllowNotificationsClicked -> sendEffect(SettingsEffect.RequestNotifications)
 
             SettingsIntent.AboutClicked -> sendEffect(SettingsEffect.OpenUrl(appInfo.sourceCodeUrl))
+
+            SettingsIntent.BackupClicked -> sendEffect(SettingsEffect.OpenBackup)
         }
     }
 

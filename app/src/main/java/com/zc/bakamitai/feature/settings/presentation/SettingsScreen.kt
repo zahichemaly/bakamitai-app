@@ -9,6 +9,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.outlined.Backup
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.outlined.Schedule
@@ -152,6 +153,7 @@ private fun SettingsContent(state: SettingsState, onIntent: (SettingsIntent) -> 
             GeneralSection(state = state, onIntent = onIntent)
             AppearanceSection(state = state, onIntent = onIntent)
             NotificationsSection(state = state, onIntent = onIntent)
+            DataSection(onIntent = onIntent)
             if (state.isAboutVisible) {
                 SettingsSectionView(
                     title = UiText.StringResource(StringResource.settings_section_about),
@@ -252,6 +254,25 @@ private fun NotificationsSection(
         } else {
             AlertsPreferenceView(state = alerts, onCheckedChange = onAlertsChange, onAllowClick = onAllowClick)
         }
+    }
+}
+
+/** Backup and restore's row (docs/7-backup.md §2): static, so it never shows a skeleton. */
+@Composable
+private fun DataSection(onIntent: (SettingsIntent) -> Unit, modifier: Modifier = Modifier) {
+    val onBackupClick = remember(onIntent) { { onIntent(SettingsIntent.BackupClicked) } }
+    SettingsSectionView(
+        title = UiText.StringResource(StringResource.settings_section_data),
+        accentColor = MaterialTheme.colorScheme.secondary,
+        modifier = modifier,
+        contentPadding = BakaMitaiTheme.spacing.xs,
+    ) {
+        PickerPreferenceView(
+            icon = Icons.Outlined.Backup,
+            title = UiText.StringResource(StringResource.settings_backup_title),
+            value = UiText.StringResource(StringResource.settings_backup_description),
+            onClick = onBackupClick,
+        )
     }
 }
 

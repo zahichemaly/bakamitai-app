@@ -12,9 +12,10 @@ fun Navigator.navigateToSettings() = navigate(SettingsNavKey)
  * Registers Settings.
  *
  * @param onNavigateBack leaves Settings: the back arrow.
+ * @param onOpenBackup opens Backup and restore.
  */
-fun EntryProviderScope<NavKey>.settingsEntry(onNavigateBack: () -> Unit) {
+fun EntryProviderScope<NavKey>.settingsEntry(onNavigateBack: () -> Unit, onOpenBackup: () -> Unit) {
     entry<SettingsNavKey> {
-        SettingsRoute(onNavigateBack = onNavigateBack)
+        SettingsRoute(onNavigateBack = onNavigateBack, onOpenBackup = onOpenBackup)
     }
 }

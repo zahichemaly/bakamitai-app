@@ -312,6 +312,8 @@ class SettingsViewModelTest {
             assertEquals(SettingsEffect.OpenUrl("https://github.com/zahichemaly/BakaMitai"), awaitItem())
             viewModel.onIntent(SettingsIntent.BackClicked)
             assertEquals(SettingsEffect.NavigateBack, awaitItem())
+            viewModel.onIntent(SettingsIntent.BackupClicked)
+            assertEquals(SettingsEffect.OpenBackup, awaitItem())
         }
     }
 

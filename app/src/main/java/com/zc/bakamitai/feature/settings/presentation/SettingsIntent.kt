@@ -34,4 +34,7 @@ sealed interface SettingsIntent {
     data class NotificationPermissionResult(val granted: Boolean) : SettingsIntent
 
     data object AboutClicked : SettingsIntent
+
+    /** The DATA section's *Backup and restore* row. */
+    data object BackupClicked : SettingsIntent
 }
