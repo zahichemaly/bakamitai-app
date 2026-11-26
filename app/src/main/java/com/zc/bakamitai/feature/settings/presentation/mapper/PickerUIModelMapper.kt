@@ -50,7 +50,11 @@ fun ThemeMode.toThemePicker(): PickerUIState<ThemeOption> {
     )
 }
 
-private fun <T> pickerOf(
+/**
+ * A picker titled [title] listing [options] in order, [selected] checked; [label] names each option and its
+ * [description] is the optional second line.
+ */
+fun <T> pickerOf(
     title: UiText,
     options: List<T>,
     selected: T,

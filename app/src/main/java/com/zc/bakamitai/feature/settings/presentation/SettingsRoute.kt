@@ -30,10 +30,12 @@ import org.koin.compose.viewmodel.koinViewModel
  * the alerts status: the user may come back from the system settings.
  *
  * @param onNavigateBack leaves Settings: the back arrow.
+ * @param onOpenBackup opens Backup and restore: the DATA section's row.
  */
 @Composable
 fun SettingsRoute(
     onNavigateBack: () -> Unit,
+    onOpenBackup: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: SettingsViewModel = koinViewModel(),
 ) {
@@ -53,6 +55,8 @@ fun SettingsRoute(
     ObserveAsEvents(viewModel.effect) { effect ->
         when (effect) {
             SettingsEffect.NavigateBack -> onNavigateBack()
+
+            SettingsEffect.OpenBackup -> onOpenBackup()
 
             is SettingsEffect.OpenUrl -> if (!context.openLink(effect.url)) {
                 scope.launch {

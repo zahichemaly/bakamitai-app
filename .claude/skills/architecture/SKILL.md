@@ -36,6 +36,8 @@ presentation ──▶ domain ◀── data
 | `presentation` | own feature's `domain`, other features' `domain` (models + use cases), `common/domain`, `common/ui`, Android (incl. notifications), Compose, Lifecycle, Coil | any `data` package, DTOs, Ktor, DataStore, Room, WorkManager, repository implementations |
 | `di` | everything in its own feature, `common`, Koin | — |
 
+A **sub-feature** (`feature/[parent]/[sub]/`, `structure` §1.2) follows the same table, and may also import its parent's same layer (and the parent's `domain` from any layer). The parent never imports its sub-feature.
+
 ### Domain purity
 
 `domain` is plain Kotlin. A `domain` file is **wrong** if it contains:

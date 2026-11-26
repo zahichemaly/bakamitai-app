@@ -52,6 +52,8 @@ class BookmarkRepositoryImplStorageErrorTest {
 
         override suspend fun insert(entity: BookmarkEntity): Long = throw SQLiteFullException("full")
 
+        override suspend fun insertAll(entities: List<BookmarkEntity>): List<Long> = throw SQLiteFullException("full")
+
         override suspend fun deleteRow(slug: String): Int = throw SQLiteFullException("full")
 
         override suspend fun updateAirings(rows: List<BookmarkAiringRow>): Int = throw SQLiteFullException("full")

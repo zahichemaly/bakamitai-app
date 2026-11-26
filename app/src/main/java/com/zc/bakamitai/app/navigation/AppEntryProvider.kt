@@ -11,6 +11,8 @@ import com.zc.bakamitai.feature.details.presentation.navigation.navigateToDetail
 import com.zc.bakamitai.feature.home.presentation.navigation.homeEntry
 import com.zc.bakamitai.feature.schedule.presentation.navigation.navigateToSchedule
 import com.zc.bakamitai.feature.schedule.presentation.navigation.scheduleEntry
+import com.zc.bakamitai.feature.settings.backup.presentation.navigation.backupEntry
+import com.zc.bakamitai.feature.settings.backup.presentation.navigation.navigateToBackup
 import com.zc.bakamitai.feature.settings.presentation.navigation.navigateToSettings
 import com.zc.bakamitai.feature.settings.presentation.navigation.settingsEntry
 import com.zc.bakamitai.feature.shows.presentation.navigation.allShowsEntry
@@ -28,7 +30,8 @@ fun appEntryProvider(navigator: Navigator, mainContent: @Composable () -> Unit):
     entryProvider {
         entry<MainNavKey> { mainContent() }
         detailsEntry(onNavigateBack = navigator::goBack)
-        settingsEntry(onNavigateBack = navigator::goBack)
+        settingsEntry(onNavigateBack = navigator::goBack, onOpenBackup = navigator::navigateToBackup)
+        backupEntry(onNavigateBack = navigator::goBack)
     }
 
 /** The tabs' entries ([TopLevelDestination]), shown inside the tab shell. */

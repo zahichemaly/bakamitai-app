@@ -43,6 +43,13 @@ class BookmarkRepositoryImpl(private val dao: BookmarkDao) : BookmarkRepository 
     override suspend fun restore(bookmark: Bookmark, trackingSince: Instant): Result<Unit> =
         storageCall { dao.insert(bookmark.toEntity(trackingSince)) }.map { }
 
+    override suspend fun getBookmarks(): Result<List<Bookmark>> =
+        storageCall { dao.getAll().mapNotNull { it.toBookmark() } }
+
+    override suspend fun restoreAll(bookmarks: List<Bookmark>, trackingSince: Instant): Result<Int> = storageCall {
+        if (bookmarks.isEmpty()) 0 else dao.insertAll(bookmarks.map { it.toEntity(trackingSince) }).count { it != -1L }
+    }
+
     override suspend fun getReleaseWatches(): Result<List<ReleaseWatch>> =
         storageCall { dao.getAll().mapNotNull { it.toReleaseWatch() } }
 

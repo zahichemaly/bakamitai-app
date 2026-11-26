@@ -28,12 +28,15 @@ class FakeBookmarkRepository : BookmarkRepository {
     var toggleFailure: Throwable? = null
     var removeFailure: Throwable? = null
     var restoreFailure: Throwable? = null
+    var getFailure: Throwable? = null
+    var restoreAllFailure: Throwable? = null
     var watchesFailure: Throwable? = null
     var airingFailure: Throwable? = null
     var saveFailure: Throwable? = null
 
     val toggled = mutableListOf<Bookmark>()
     val restored = mutableListOf<Pair<Bookmark, Instant>>()
+    val restoredAll = mutableListOf<Pair<List<Bookmark>, Instant>>()
     val airingUpdates = mutableListOf<Pair<Map<ShowSlug, AiringSlot?>, Instant>>()
     val savedUpdates = mutableListOf<List<ReleaseWatchUpdate>>()
     var watchReads = 0
@@ -72,6 +75,20 @@ class FakeBookmarkRepository : BookmarkRepository {
             if (current.any { it.show.slug == bookmark.show.slug }) current else current + bookmark
         }
         return Result.success(Unit)
+    }
+
+    override suspend fun getBookmarks(): Result<List<Bookmark>> {
+        getFailure?.let { return Result.failure(it) }
+        return Result.success(bookmarks.value)
+    }
+
+    override suspend fun restoreAll(bookmarks: List<Bookmark>, trackingSince: Instant): Result<Int> {
+        restoredAll += bookmarks to trackingSince
+        restoreAllFailure?.let { return Result.failure(it) }
+        val saved = this.bookmarks.value.map { it.show.slug }.toSet()
+        val added = bookmarks.filterNot { it.show.slug in saved }.distinctBy { it.show.slug }
+        this.bookmarks.update { it + added }
+        return Result.success(added.size)
     }
 
     override suspend fun getReleaseWatches(): Result<List<ReleaseWatch>> {

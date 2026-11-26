@@ -49,6 +49,13 @@ abstract class BookmarkDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     abstract suspend fun insert(entity: BookmarkEntity): Long
 
+    /**
+     * Inserts every entity whose slug isn't saved yet, in one transaction (a restored backup). Returns one row id per
+     * entity, -1 for each one ignored.
+     */
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    abstract suspend fun insertAll(entities: List<BookmarkEntity>): List<Long>
+
     @Query(
         """
         DELETE FROM bookmark

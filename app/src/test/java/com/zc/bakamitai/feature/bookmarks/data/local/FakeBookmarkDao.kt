@@ -34,6 +34,11 @@ class FakeBookmarkDao : BookmarkDao() {
         return rows.value.size.toLong()
     }
 
+    override suspend fun insertAll(entities: List<BookmarkEntity>): List<Long> {
+        failure?.let { throw it }
+        return entities.map { insert(it) }
+    }
+
     override suspend fun deleteRow(slug: String): Int {
         val existed = slug in rows.value
         rows.update { it - slug }
