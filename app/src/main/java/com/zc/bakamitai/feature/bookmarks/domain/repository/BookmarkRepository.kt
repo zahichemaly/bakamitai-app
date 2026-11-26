@@ -27,6 +27,16 @@ interface BookmarkRepository {
     /** Saves [bookmark] again with its original date, tracking new episodes from [trackingSince]. */
     suspend fun restore(bookmark: Bookmark, trackingSince: Instant): Result<Unit>
 
+    /** Every saved show, newest first (a backup). */
+    suspend fun getBookmarks(): Result<List<Bookmark>>
+
+    /**
+     * Saves every bookmark whose slug isn't saved yet, with its original date, tracking new episodes from
+     * [trackingSince], in one atomic write (a restored backup). Bookmarks already saved are left as they are.
+     * Returns how many were added.
+     */
+    suspend fun restoreAll(bookmarks: List<Bookmark>, trackingSince: Instant): Result<Int>
+
     /** Every bookmark's tracking state, for a release check. */
     suspend fun getReleaseWatches(): Result<List<ReleaseWatch>>
 

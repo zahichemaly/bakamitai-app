@@ -170,6 +170,10 @@ class ReleaseCheckWorkerTest {
 
         override suspend fun restore(bookmark: Bookmark, trackingSince: Instant) = Result.success(Unit)
 
+        override suspend fun getBookmarks(): Result<List<Bookmark>> = Result.success(emptyList())
+
+        override suspend fun restoreAll(bookmarks: List<Bookmark>, trackingSince: Instant) = Result.success(0)
+
         override suspend fun getReleaseWatches(): Result<List<ReleaseWatch>> = Result.success(watches)
 
         override suspend fun updateAiringSlots(slots: Map<ShowSlug, AiringSlot?>, checkedAt: Instant) =

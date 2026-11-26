@@ -66,6 +66,30 @@ class BookmarkRepositoryImplTest {
     }
 
     @Test
+    fun `getBookmarks returns every bookmark, newest first`() = runTest {
+        repository.toggle(frieren)
+        repository.toggle(dandadan)
+
+        assertEquals(Result.success(listOf(dandadan, frieren)), repository.getBookmarks())
+    }
+
+    @Test
+    fun `restoreAll adds only new slugs, keeps their dates and tracks from the given time`() = runTest {
+        repository.toggle(frieren)
+        val savedRow = dao.rows.value.getValue("frieren")
+        val now = Instant.parse("2026-11-26T08:00:00Z")
+        val backedUpFrieren = frieren.copy(show = frieren.show.copy(title = "Renamed"))
+
+        assertEquals(Result.success(1), repository.restoreAll(listOf(backedUpFrieren, dandadan), trackingSince = now))
+
+        assertEquals(savedRow, dao.rows.value.getValue("frieren"))
+        val added = dao.rows.value.getValue("dandadan")
+        assertEquals(dandadan.addedAt.toEpochMilliseconds(), added.addedAt)
+        assertEquals(now.toEpochMilliseconds(), added.trackingSince)
+        assertEquals(Result.success(0), repository.restoreAll(emptyList(), trackingSince = now))
+    }
+
+    @Test
     fun `restore keeps the date and slot, tracks from the given time and refreshes the slot`() = runTest {
         val withSlot = frieren.copy(airing = mondayNoon())
         val now = Instant.parse("2026-11-19T08:00:00Z")
