@@ -12,8 +12,10 @@ android {
 
     defaultConfig {
         applicationId = "com.zc.bakamitai"
-        versionCode = 5
-        versionName = "2.0.0"
+        // The Play release workflow passes -PversionCode and -PversionName from the release tag;
+        // local builds keep these defaults.
+        versionCode = providers.gradleProperty("versionCode").map(String::toInt).getOrElse(5)
+        versionName = providers.gradleProperty("versionName").getOrElse("2.0.0")
     }
 
     signingConfigs {
@@ -33,8 +35,10 @@ android {
             applicationIdSuffix = ".dev"
             versionNameSuffix = "-dev"
             // A build type's signing config wins over a flavor's, and debug has its own, so this only signs
-            // developmentRelease (built by .github/workflows/build-release-apk.yml). productionRelease stays
-            // unsigned until a release key is set up.
+            // developmentRelease (built by .github/workflows/build-release-apk.yml). productionRelease has no
+            // signing config here: it is signed with the Play upload key by whoever builds it, through AGP's
+            // android.injected.signing.* properties (the Play release workflow, or Android Studio's Generate
+            // Signed App Bundle). Without them it stays unsigned.
             signingConfig = signingConfigs.getByName("development")
         }
         create("production") {

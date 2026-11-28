@@ -13,3 +13,6 @@
 .externalNativeBuild
 .cxx
 local.properties
+# Bundler (fastlane for Play releases)
+/.bundle
+/vendor/bundle
