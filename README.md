@@ -47,6 +47,57 @@ Or open the project in Android Studio and run the `app` configuration.
 
 Instrumented tests need a running emulator or connected device.
 
+## Releasing
+
+Pushing a tag `v<versionName>-<versionCode>-<track>` publishes to that Google Play track, through
+[fastlane](https://docs.fastlane.tools/actions/supply/) pinned in `Gemfile.lock`.
+
+| Track        | Google Play            | Workflow                          | What the tag does                                                                                                                |
+|--------------|------------------------|-----------------------------------|----------------------------------------------------------------------------------------------------------------------------------|
+| `internal`   | Internal testing       | Play release (`play-release.yml`) | Builds the `productionRelease` bundle with that version, signs it with the Play upload key and uploads it                        |
+| `alpha`      | Closed testing – Alpha | Play release                      | Same                                                                                                                             |
+| `beta`       | Open testing           | Play release                      | Same                                                                                                                             |
+| `production` | Production             | Play promote (`play-promote.yml`) | Promotes the build Alpha has with that version code. Nothing is cloned or built: it checks out only `Gemfile` and `Gemfile.lock` |
+
+Test on Alpha, then promote the same build. The tag's message is the release notes; to write several lines, pass it
+through `-F -` and a heredoc:
+
+```bash
+git tag -a v2.0.1-6-alpha -F - <<'EOF'
+Smoother schedule and bookmarks.
+
+• Backup and restore your bookmarks
+• Faster show details
+EOF
+```
+
+```bash
+git push origin v2.0.1-6-alpha
+```
+
+Once it's tested, promote that same build to production with the same version name and code. Nothing is rebuilt, and
+no message is needed: the release keeps its Alpha notes.
+
+```bash
+git tag v2.0.1-6-production
+```
+
+```bash
+git push origin v2.0.1-6-production
+```
+
+- An `-alpha`, `-beta` or `-internal` tag's message becomes the release notes (en-US, at most 500 characters), line
+  breaks included. Without a message, the notes are "Bug fixes and improvements." A production release keeps the notes
+  it had on Alpha.
+- The tag goes on the commit you're on. To tag another one, put its hash after the tag name
+  (`git tag -a v2.0.1-6-alpha <commit> -F - <<'EOF'`).
+- Check the message before pushing with `git tag -n20 v2.0.1-6-alpha`. Sourcetree's tag dialog only takes one line, so
+  create multiline tags from its **Terminal**.
+- Each version code can be uploaded to Play only once, so every new build needs a higher code.
+- A production tag fails, changing nothing, if Alpha doesn't have that version code.
+
+Setup, secrets and troubleshooting: [docs/8-play-release.md](docs/8-play-release.md).
+
 ## Project structure
 
 ```text
